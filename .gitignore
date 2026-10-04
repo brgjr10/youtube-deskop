@@ -1,0 +1,17 @@
+# Build output
+dist/
+
+# Node
+node_modules/
+.npm/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.lnk
+
+# Caches
+.cache/
+
+# Local config
+.env

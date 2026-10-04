@@ -1,0 +1,1928 @@
+/* YouTube iOS 27 Liquid Glass - injected into the Electron YouTube app.
+   Generated from youtube.theme (Stylus/USO userstyle): the @-moz-document
+   wrapper and the UserStyle metadata block are stripped because Electron loads
+   this straight into the page. Edit the .theme file and regenerate, or tweak
+   this copy directly - the app reads it on every launch. */
+
+
+
+/* ==========================================================================
+   1. DESIGN TOKENS
+   Every colour, radius, blur and curve in the theme resolves to one of
+   these, so the whole UI can be re-tuned from a single block.
+   ========================================================================== */
+:root {
+    --ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text", "Segoe UI", Inter, Roboto, system-ui, "Helvetica Neue", Arial, sans-serif;
+
+    /* Fills: three glass depths. Depth 1 = cards, 2 = chrome, 3 = popovers. */
+    --ios-glass-1: rgba(21, 24, 36, 0.55);
+    --ios-glass-2: rgba(19, 22, 33, 0.66);
+    --ios-glass-3: rgba(24, 28, 42, 0.78);
+    --ios-fill-soft: rgba(255, 255, 255, 0.06);
+    --ios-fill-medium: rgba(255, 255, 255, 0.10);
+    --ios-fill-strong: rgba(255, 255, 255, 0.16);
+
+    /* Hairlines: rim light on top edge, separator on the bottom. */
+    --ios-hairline: rgba(255, 255, 255, 0.11);
+    --ios-hairline-strong: rgba(255, 255, 255, 0.20);
+    --ios-rim-top: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+    --ios-text: #f2f5fa;
+    --ios-text-dim: #aab2c2;
+    --ios-text-faint: rgba(255, 255, 255, 0.45);
+    --ios-accent: #58a6ff;
+    --ios-danger: #f85149;
+    --ios-success: #3fb950;
+
+    --ios-r-xs: 10px;
+    --ios-r-sm: 14px;
+    --ios-r-md: 18px;
+    --ios-r-lg: 24px;
+    --ios-r-xl: 30px;
+    --ios-r-pill: 999px;
+
+    --ios-blur: 30px;
+    --ios-blur-strong: 42px;
+    --ios-saturate: 185%;
+
+    --ios-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.26);
+    --ios-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.36);
+    --ios-shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.50);
+
+    /* Spring curves: one for movement, one for entrances, one for bounce. */
+    --ios-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --ios-spring-soft: cubic-bezier(0.32, 0.72, 0, 1);
+    --ios-spring-bounce: cubic-bezier(0.34, 1.42, 0.64, 1);
+    --ios-dur-fast: 130ms;
+    --ios-dur-med: 260ms;
+    --ios-dur-slow: 420ms;
+
+    /* Layout: the dock floats 12px down and is 64px tall, so every
+       scroll surface below it must clear 88px or content hides behind it. */
+    --ios-dock-top: 12px;
+    --ios-dock-h: 64px;
+    --ios-content-top: calc(var(--ios-dock-top) + var(--ios-dock-h) + 12px);
+    --ios-gutter: 24px;
+}
+
+/* ==========================================================================
+   2. GLOBAL RESET
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    font-family: var(--ios-font) !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
+}
+
+html {
+    color-scheme: dark !important;
+}
+
+/* Icon glyphs and emoji must not inherit the text stack. */
+.material-icons,
+.material-icons-round,
+.material-icons-outlined,
+.material-icons-sharp,
+.material-symbols-rounded,
+.material-symbols-outlined,
+yt-icon,
+.yt-icon,
+.yt-icon-shape,
+.ytIconWrapperHost,
+.ytp-icon {
+    font-family: "YouTube Sans", "Material Icons", "Material Symbols Outlined", var(--ios-font) !important;
+}
+
+.emoji,
+yt-emoji,
+.yt-core-attributed-string__emoji {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--ios-font) !important;
+}
+
+::-webkit-scrollbar {
+    width: 11px !important;
+    height: 11px !important;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.14) !important;
+    border: 3px solid transparent !important;
+    background-clip: content-box !important;
+    border-radius: var(--ios-r-pill) !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.30) !important;
+}
+
+/* ==========================================================================
+   3. PLATFORM TOKENS
+   YouTube paints almost every surface from --yt-sys-color-baseline--*.
+   Overriding the layer here beats patching hundreds of components.
+   ========================================================================== */
+:root {
+    --yt-sys-color-baseline--base-background: #080a11;
+    --yt-sys-color-baseline--raised-background: var(--ios-fill-soft);
+    --yt-sys-color-baseline--menu-background: var(--ios-glass-3);
+    --yt-sys-color-baseline--frosted-glass-desktop: rgba(14, 16, 25, 0.62);
+    --yt-sys-color-baseline--frosted-glass-mobile: rgba(14, 16, 25, 0.74);
+    --yt-sys-color-baseline--additive-background: var(--ios-fill-medium);
+    --yt-sys-color-baseline--tonal-background: var(--ios-fill-medium);
+    --yt-sys-color-baseline--tonal-wash: var(--ios-fill-soft);
+    --yt-sys-color-baseline--tonal-rim: var(--ios-hairline);
+    --yt-sys-color-baseline--solid-rim: var(--ios-hairline-strong);
+    --yt-sys-color-baseline--outline: var(--ios-hairline-strong);
+    --yt-sys-color-baseline--outline-rim: var(--ios-hairline);
+    --yt-sys-color-baseline--outline-opaque: #33384a;
+    --yt-sys-color-baseline--touch-response: rgba(255, 255, 255, 0.14);
+    --yt-sys-color-baseline--state-mono-standard-hovered: var(--ios-fill-medium);
+    --yt-sys-color-baseline--state-mono-standard-pressed: var(--ios-fill-strong);
+    --yt-sys-color-baseline--state-overlay-standard-hovered: var(--ios-fill-medium);
+    --yt-sys-color-baseline--button-chip-background-hover: var(--ios-fill-strong);
+    --yt-sys-color-baseline--text-primary: var(--ios-text);
+    --yt-sys-color-baseline--text-secondary: var(--ios-text-dim);
+    --yt-sys-color-baseline--wordmark-text: #ffffff;
+    --yt-sys-color-baseline--shadow-medium: rgba(0, 0, 0, 0.38);
+
+    /* Legacy layer names still referenced by older components. */
+    --yt-deprecated-general-background-a: transparent;
+    --yt-deprecated-general-background-b: transparent;
+    --yt-deprecated-general-background-c: transparent;
+    --yt-deprecated-general-background-d: transparent;
+    --yt-deprecated-raised-background: transparent;
+    --yt-deprecated-black-1-alpha-95: transparent;
+    --yt-deprecated-black-1-alpha-98: transparent;
+}
+
+/* ==========================================================================
+   4. PAGE BACKDROP
+   The document scrolls, so a fixed-attachment gradient on ytd-app gives a
+   stable ambient field instead of a gradient that slides with the feed.
+   ========================================================================== */
+html,
+body {
+    background-color: #05060a !important;
+    color: var(--ios-text) !important;
+}
+
+ytd-app {
+    background-color: transparent !important;
+    background-image:
+        radial-gradient(1100px 700px at 6% -10%, rgba(88, 130, 255, 0.20), transparent 62%),
+        radial-gradient(1000px 640px at 104% 8%, rgba(236, 72, 153, 0.15), transparent 64%),
+        radial-gradient(1200px 900px at 50% 116%, rgba(16, 185, 129, 0.11), transparent 62%),
+        linear-gradient(180deg, #0a0c15 0%, #06070c 58%, #05060a 100%) !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Every scroll wrapper must stay transparent or the backdrop disappears. */
+#content,
+#page-manager,
+tp-yt-paper-scroller,
+ytd-browse,
+ytd-watch-flexy,
+ytd-two-column-browse-results-renderer,
+ytd-section-list-renderer,
+ytd-rich-grid-renderer,
+ytd-grid-renderer,
+ytd-item-section-renderer,
+ytd-browse[page-subtype="home"] #contents.ytd-browse {
+    background-color: transparent !important;
+}
+
+/* Text colour is forced on the containers so light mode cannot leave
+   black type on a dark backdrop. */
+#page-manager,
+ytd-browse,
+ytd-watch-flexy,
+ytd-watch-metadata,
+ytd-comments,
+ytd-grid-renderer,
+ytd-rich-grid-renderer,
+ytd-section-list-renderer,
+ytd-browse[page-subtype="channels"],
+ytd-browse[page-subtype="playlists"] {
+    color: var(--ios-text) !important;
+}
+
+/* ==========================================================================
+   5. ACCESSIBILITY
+   ========================================================================== */
+:focus-visible {
+    outline: 2px solid var(--ios-accent) !important;
+    outline-offset: 2px !important;
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Users who ask for less transparency get opaque surfaces, not a
+   half-broken blur stack. */
+@media (prefers-reduced-transparency: reduce) {
+    .ytLockupViewModelHost.ytLockupViewModelVertical,
+    ytd-rich-grid-media,
+    ytd-grid-video-renderer #dismissible,
+    ytd-masthead,
+    #guide-content,
+    ytd-mini-guide-renderer,
+    ytd-feed-filter-chip-bar-renderer,
+    tp-yt-paper-listbox,
+    ytd-menu-renderer,
+    tp-yt-paper-dialog,
+    ytd-playlist-panel-renderer #container {
+        background: #10131d !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}
+
+/* No backdrop-filter support: fall back to opaque fills. */
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .ytLockupViewModelHost.ytLockupViewModelVertical,
+    ytd-rich-grid-media,
+    ytd-grid-video-renderer #dismissible,
+    ytd-masthead,
+    #guide-content,
+    ytd-mini-guide-renderer,
+    ytd-feed-filter-chip-bar-renderer {
+        background: rgba(18, 21, 32, 0.94) !important;
+    }
+}
+
+/* ==========================================================================
+   6. FLOATING GLASS DOCK (MASTHEAD)
+   ========================================================================== */
+#masthead-container.ytd-app {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    height: var(--ios-content-top) !important;
+    padding: var(--ios-dock-top) var(--ios-gutter) 0 var(--ios-gutter) !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    z-index: 2020 !important;
+}
+
+/* YouTube's own masthead background layer would defeat the glass. */
+#masthead-container #background,
+ytd-masthead #background,
+ytd-masthead[has-background] #background {
+    display: none !important;
+    background: transparent !important;
+}
+
+/* border-box keeps the dock at exactly --ios-dock-h: the 1px rim must sit
+   inside the bar, not add 2px and push the contents off centre. */
+ytd-masthead {
+    box-sizing: border-box !important;
+    background: var(--ios-glass-2) !important;
+    backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-xl) !important;
+    box-shadow: var(--ios-shadow-lg), var(--ios-rim-top) !important;
+    height: var(--ios-dock-h) !important;
+    transition: background-color var(--ios-dur-med) var(--ios-spring),
+                box-shadow var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+/* Content starts below the floating dock instead of behind it. */
+#page-manager.ytd-app {
+    margin-top: var(--ios-content-top) !important;
+}
+
+/* YouTube pins the masthead internals to its own 56px; stretch them so the
+   logo, search pill and account cluster all centre on the 64px bar. */
+ytd-masthead #container {
+    height: 100% !important;
+    padding: 0 12px !important;
+}
+
+ytd-masthead #center {
+    height: 100% !important;
+}
+
+/* ==========================================================================
+   7. SEARCH â€” PILL WITH FOCUS BLOOM
+   The 2026 searchbox is a web component: host > InputWrapper > InputBox >
+   form > input. The legacy ytd-searchbox rules are kept as a fallback.
+   ========================================================================== */
+yt-searchbox.ytSearchboxComponentHost {
+    --yt-searchbox-border-color: transparent;
+    height: 100% !important;
+    align-items: center !important;
+}
+
+.ytSearchboxComponentInputWrapper {
+    box-sizing: border-box !important;
+    height: 42px !important;
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+    backdrop-filter: blur(18px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.24), 0 4px 18px rgba(0, 0, 0, 0.18) !important;
+    overflow: hidden !important;
+    transition: background-color var(--ios-dur-med) var(--ios-spring),
+                border-color var(--ios-dur-med) var(--ios-spring),
+                box-shadow var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+.ytSearchboxComponentInputBox,
+.ytSearchboxComponentInputContainer,
+form.ytSearchboxComponentSearchForm {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    height: 100% !important;
+}
+
+/* The form is a COLUMN flex box, so the vertical axis is the main axis:
+   justify-content is what centres the 21px input in the 40px pill.
+   align-items would only push it sideways. */
+form.ytSearchboxComponentSearchForm {
+    display: flex !important;
+    justify-content: center !important;
+}
+
+input.ytSearchboxComponentInput,
+.ytSearchboxComponentInputTextArea {
+    background: transparent !important;
+    color: var(--ios-text) !important;
+    font-size: 15px !important;
+    padding: 0 6px 0 10px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+}
+
+input.ytSearchboxComponentInput::placeholder {
+    color: var(--ios-text-faint) !important;
+}
+
+/* Focus bloom lives on the host so the whole pill reacts, not just the text. */
+.ytSearchboxComponentHostIsFocused .ytSearchboxComponentInputWrapper,
+.ytSearchboxComponentInputWrapper:focus-within {
+    background: var(--ios-fill-medium) !important;
+    border-color: var(--ios-hairline-strong) !important;
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.16),
+                0 0 28px rgba(120, 170, 255, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.ytSearchboxComponentClearButton,
+.ytSearchboxComponentSearchButton {
+    background: transparent !important;
+    border: none !important;
+    color: var(--ios-text-dim) !important;
+    border-radius: 50% !important;
+    transition: background-color var(--ios-dur-fast) ease, color var(--ios-dur-fast) ease,
+                transform var(--ios-dur-fast) var(--ios-spring) !important;
+}
+
+.ytSearchboxComponentSearchButton:hover,
+.ytSearchboxComponentClearButton:hover {
+    background: var(--ios-fill-medium) !important;
+    color: var(--ios-text) !important;
+}
+
+.ytSearchboxComponentSearchButton:active {
+    transform: scale(0.9) !important;
+}
+
+/* Suggestion sheet: glass panel hanging off the pill. */
+.ytSearchboxComponentSuggestionsContainer {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-lg) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+    margin-top: 8px !important;
+    overflow: hidden !important;
+}
+
+.ytSearchboxComponentSuggestionsContainer > * {
+    border-radius: 0 !important;
+}
+
+/* Legacy searchbox fallback (older builds / embedded players). */
+#container.ytd-searchbox {
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+    box-shadow: none !important;
+    height: 40px !important;
+    padding: 0 6px 0 18px !important;
+}
+
+#container.ytd-searchbox:hover,
+ytd-searchbox[has-focus] #container.ytd-searchbox {
+    background: var(--ios-fill-medium) !important;
+    border-color: var(--ios-hairline-strong) !important;
+}
+
+.ytSearchboxComponentInputTextArea,
+#container.ytd-searchbox input {
+    color: var(--ios-text) !important;
+}
+
+#search-icon-legacy.ytd-searchbox {
+    display: none !important;
+}
+
+/* ==========================================================================
+   8. DOCK CONTROLS
+   ========================================================================== */
+ytd-masthead #start,
+ytd-masthead #center,
+ytd-masthead #end {
+    background: transparent !important;
+}
+
+ytd-masthead yt-icon-button#button,
+ytd-masthead ytd-button-renderer yt-button-shape button,
+ytd-masthead ytd-button-renderer yt-button-shape a,
+#voice-search-button yt-button-shape button,
+#ai-companion-button yt-button-shape button,
+ytd-topbar-menu-button-renderer#button button,
+.ytSearchboxComponentSearchButton {
+    border-radius: var(--ios-r-pill) !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                transform var(--ios-dur-fast) var(--ios-spring),
+                box-shadow var(--ios-dur-fast) ease !important;
+}
+
+ytd-masthead yt-icon-button#button:hover,
+ytd-masthead ytd-button-renderer yt-button-shape button:hover,
+ytd-masthead ytd-button-renderer yt-button-shape a:hover,
+#voice-search-button yt-button-shape button:hover,
+#ai-companion-button yt-button-shape button:hover,
+ytd-topbar-menu-button-renderer#button button:hover {
+    background: var(--ios-fill-medium) !important;
+    transform: scale(1.06) !important;
+}
+
+ytd-masthead yt-icon-button#button:active,
+ytd-masthead ytd-button-renderer yt-button-shape button:active,
+ytd-topbar-menu-button-renderer#button button:active {
+    transform: scale(0.92) !important;
+}
+
+/* YouTube's ink/mouseover animations are replaced by the glass hover. */
+ytd-masthead yt-interaction .stroke,
+ytd-masthead yt-interaction .fill {
+    opacity: 0 !important;
+}
+
+#avatar.ytd-masthead,
+#avatar img,
+yt-avatar-shape img,
+#avatar-btn img {
+    border-radius: 50% !important;
+}
+
+ytd-topbar-logo-renderer #logo {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45)) !important;
+}
+
+/* ==========================================================================
+   9. SIDE RAILS â€” EXPANDED GUIDE, MINI GUIDE, DRAWER
+   The drawer is position:fixed at YouTube's own 56px masthead offset, so the
+   rail has to be re-hung from the dock; the content container also carries an
+   opaque fill and a 120px strip reserved for the mini rail, both of which
+   would punch a hole in the glass.
+   ========================================================================== */
+tp-yt-app-drawer#guide {
+    top: var(--ios-content-top) !important;
+    height: calc(100vh - var(--ios-content-top)) !important;
+}
+
+tp-yt-app-drawer#guide #contentContainer,
+tp-yt-app-drawer#guide #guide-wrapper,
+tp-yt-app-drawer#guide #guide-content {
+    box-sizing: border-box !important;
+    height: 100% !important;
+}
+
+/* YouTube reserves a 120px strip in this container for the collapsed mini
+   rail; left alone it shrinks the glass panel and leaves a dead gap. */
+tp-yt-app-drawer#guide #contentContainer {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+tp-yt-app-drawer#guide #guide-content {
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+}
+
+tp-yt-app-drawer #guide-content,
+ytd-guide-renderer #guide-content {
+    background: var(--ios-glass-2) !important;
+    backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    border-right: 1px solid var(--ios-hairline) !important;
+    border-top-right-radius: var(--ios-r-xl) !important;
+    border-bottom-right-radius: var(--ios-r-xl) !important;
+    box-shadow: 26px 0 60px rgba(0, 0, 0, 0.42) !important;
+}
+
+/* The scrim only appears when the guide opens as an overlay. */
+tp-yt-app-drawer #scrim {
+    background: rgba(4, 5, 9, 0.55) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+ytd-guide-renderer #sections,
+ytd-guide-renderer #footer {
+    padding: 12px 0 20px 0 !important;
+}
+
+ytd-guide-section-renderer h3 {
+    color: var(--ios-text-faint) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    padding: 14px 26px 6px !important;
+}
+
+ytd-guide-entry-renderer,
+ytd-mini-guide-entry-renderer {
+    border-radius: var(--ios-r-md) !important;
+    margin: 2px 12px !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                box-shadow var(--ios-dur-fast) ease !important;
+}
+
+ytd-guide-entry-renderer:hover,
+ytd-mini-guide-entry-renderer:hover {
+    background: var(--ios-fill-medium) !important;
+    box-shadow: var(--ios-shadow-sm) !important;
+}
+
+ytd-guide-entry-renderer[selected],
+ytd-guide-entry-renderer[active] {
+    background: var(--ios-fill-strong) !important;
+}
+
+ytd-guide-entry-renderer #endpoint,
+ytd-guide-entry-renderer yt-formatted-string {
+    color: var(--ios-text) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+ytd-guide-entry-renderer yt-interaction .stroke,
+ytd-guide-entry-renderer yt-interaction .fill,
+ytd-mini-guide-entry-renderer yt-interaction .stroke,
+ytd-mini-guide-entry-renderer yt-interaction .fill {
+    opacity: 0 !important;
+}
+
+/* Subscriptions card inside the guide. */
+ytd-guide-collapsible-entry-renderer #expanded {
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-md) !important;
+    overflow: hidden !important;
+}
+
+ytd-guide-collapsible-entry-renderer #expander-item:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+/* Mini rail: same glass language as the expanded dock. */
+ytd-mini-guide-renderer {
+    top: var(--ios-content-top) !important;
+    background: var(--ios-glass-2) !important;
+    backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    border-right: 1px solid var(--ios-hairline) !important;
+    border-radius: 0 var(--ios-r-lg) var(--ios-r-lg) 0 !important;
+    box-shadow: 18px 0 40px rgba(0, 0, 0, 0.4) !important;
+    padding: 10px 0 !important;
+}
+
+ytd-mini-guide-renderer #items > * {
+    border-radius: var(--ios-r-sm) !important;
+    transition: background-color var(--ios-dur-fast) ease !important;
+}
+
+ytd-mini-guide-renderer #items > *:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+/* Ghost header used by the drawer must not punch a hole in the glass. */
+tp-yt-app-drawer #guide-wrapper #header,
+#guide-content #header.ytd-app {
+    display: none !important;
+}
+
+ytd-guide-signin-promo-renderer {
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-md) !important;
+    margin: 4px 12px !important;
+    padding: 12px !important;
+}
+
+ytd-guide-signin-promo-renderer yt-formatted-string {
+    color: var(--ios-text-dim) !important;
+    font-size: 13px !important;
+}
+
+ytd-guide-signin-promo-renderer a.ytSpecButtonShapeNextHost {
+    background: #ffffff !important;
+    color: #0b0d14 !important;
+    border-radius: var(--ios-r-pill) !important;
+    font-weight: 700 !important;
+}
+
+/* ==========================================================================
+   10. FILTER CHIPS â€” GLASS BAR THAT STICKS UNDER THE DOCK
+   ========================================================================== */
+ytd-feed-filter-chip-bar-renderer {
+    position: sticky !important;
+    top: calc(var(--ios-content-top) - 2px) !important;
+    z-index: 150 !important;
+    background: var(--ios-glass-2) !important;
+    backdrop-filter: blur(24px) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-lg) !important;
+    box-shadow: var(--ios-shadow-md), var(--ios-rim-top) !important;
+    margin: 12px var(--ios-gutter) 18px var(--ios-gutter) !important;
+    padding: 8px !important;
+}
+
+ytd-feed-filter-chip-bar-renderer #chips,
+ytd-feed-filter-chip-bar-renderer .chips,
+yt-chip-cloud-chip-renderer {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    scrollbar-width: none !important;
+}
+
+ytd-feed-filter-chip-bar-renderer #chips::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* Scroll arrows. YouTube paints these as solid dark squares that fight the
+   glass strip, so keep them as plain ghost circles. */
+ytd-feed-filter-chip-bar-renderer #left-arrow,
+ytd-feed-filter-chip-bar-renderer #right-arrow,
+ytd-feed-filter-chip-bar-renderer ytd-button-renderer {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 50% !important;
+    margin: 0 4px !important;
+}
+
+ytd-feed-filter-chip-bar-renderer #left-arrow:hover,
+ytd-feed-filter-chip-bar-renderer #right-arrow:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+/* The strip itself is square-cornered too: #chips-wrapper spans the full
+   width with an opaque rgb(15,15,15) fill behind the glass, and each arrow
+   wrapper paints the same square again. Both square off the 24px glass bar
+   they sit inside, which is what made this row look half-painted. */
+ytd-feed-filter-chip-bar-renderer #chips-wrapper,
+ytd-feed-filter-chip-bar-renderer #chips-content,
+ytd-feed-filter-chip-bar-renderer #left-arrow-button,
+ytd-feed-filter-chip-bar-renderer #right-arrow-button,
+ytd-feed-filter-chip-bar-renderer #filter {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* The chip ripple ships an inline border-radius: 8px, so on hover a square
+   flashes inside a pill. Inline styles lose to a !important rule. */
+ytd-feed-filter-chip-bar-renderer .ytSpecTouchFeedbackShapeStroke,
+ytd-feed-filter-chip-bar-renderer .ytSpecTouchFeedbackShapeFill,
+.ytChipShapeChip .ytSpecTouchFeedbackShapeStroke,
+.ytChipShapeChip .ytSpecTouchFeedbackShapeFill {
+    border-radius: var(--ios-r-pill) !important;
+}
+
+/* yt-related-chip-cloud-renderer (the section filter row) is the same
+   skeleton as the feed chip bar under a different tag - #content wraps
+   yt-chip-cloud-renderer, which holds #container with its own arrow wrappers
+   and #scroll-container - so the corrections above apply here too. The chip
+   pills themselves are already covered by the class rules below. */
+yt-related-chip-cloud-renderer #content,
+yt-related-chip-cloud-renderer #container,
+yt-related-chip-cloud-renderer #left-arrow-button,
+yt-related-chip-cloud-renderer #right-arrow-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+yt-related-chip-cloud-renderer #left-arrow,
+yt-related-chip-cloud-renderer #right-arrow,
+yt-related-chip-cloud-renderer ytd-button-renderer,
+yt-related-chip-cloud-renderer button.ytSpecButtonShapeNextHost {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 50% !important;
+    margin: 0 4px !important;
+}
+
+yt-related-chip-cloud-renderer #left-arrow:hover,
+yt-related-chip-cloud-renderer #right-arrow:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+yt-related-chip-cloud-renderer #scroll-container,
+yt-related-chip-cloud-renderer #chips {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: transparent !important;
+    scrollbar-width: none !important;
+}
+
+yt-related-chip-cloud-renderer #chips::-webkit-scrollbar,
+yt-related-chip-cloud-renderer #scroll-container::-webkit-scrollbar {
+    display: none !important;
+}
+
+.ytChipShapeChip,
+yt-chip-cloud-chip-renderer .chip-container,
+#chips .yt-chip {
+    box-sizing: border-box !important;
+    border-radius: var(--ios-r-pill) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--ios-text-dim) !important;
+    font-weight: 600 !important;
+    padding: 0 18px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                color var(--ios-dur-fast) ease,
+                border-color var(--ios-dur-fast) ease !important;
+}
+
+.ytChipShapeChip:hover,
+yt-chip-cloud-chip-renderer .chip-container:hover {
+    background: var(--ios-fill-medium) !important;
+    color: var(--ios-text) !important;
+}
+
+/* Active chip reads as a solid light pill â€” the iOS segmented control look. */
+yt-chip-cloud-chip-renderer[iron-selected] .ytChipShapeChip,
+yt-chip-cloud-chip-renderer[selected] .ytChipShapeChip,
+.ytChipShapeChip.ytChipShapeActive {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.92) !important;
+    color: #0b0d14 !important;
+}
+
+/* Channel tab bar shares the pill language. 2026 renders it as
+   ytd-tabbed-page-header > tp-yt-paper-tabs#tabs with a white sliding
+   indicator; the older host is ytd-tabbed-header-renderer. */
+ytd-tabbed-page-header tp-yt-paper-tabs#tabs,
+yt-tabbed-header-renderer #tabs {
+    background: var(--ios-glass-1) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+    padding: 5px 12px !important;
+    box-shadow: var(--ios-shadow-sm), var(--ios-rim-top) !important;
+}
+
+ytd-tabbed-page-header yt-tab-shape,
+yt-tabbed-header-renderer yt-tab-shape {
+    border-radius: var(--ios-r-pill) !important;
+    color: var(--ios-text-dim) !important;
+    font-weight: 600 !important;
+    transition: background-color var(--ios-dur-fast) ease, color var(--ios-dur-fast) ease !important;
+}
+
+ytd-tabbed-page-header yt-tab-shape:hover,
+yt-tabbed-header-renderer yt-tab-shape:hover {
+    background: var(--ios-fill-medium) !important;
+    color: var(--ios-text) !important;
+}
+
+/* Selected tab is marked with the white 2px slider underneath it, so the
+   label brightens instead of inverting. */
+ytd-tabbed-page-header yt-tab-shape[aria-selected="true"],
+ytd-tabbed-page-header yt-tab-shape[selected],
+yt-tabbed-header-renderer yt-tab-shape[selected],
+yt-tabbed-header-renderer .tab-shape-selected {
+    background: transparent !important;
+    color: var(--ios-text) !important;
+    font-weight: 700 !important;
+}
+
+.tabGroupShapeSlider {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-radius: var(--ios-r-pill) !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.35) !important;
+}
+
+/* ==========================================================================
+   11. VIDEO CARDS â€” GLASS WIDGET TILES
+   The 2026 grid renders yt-lockup-view-model; the rich-grid renderers are
+   kept for surfaces that still use them.
+   Cards get a translucent fill, not a blur: nothing sits behind them except
+   the page, so 30+ live backdrop-filters would be pure GPU cost.
+   ========================================================================== */
+ytd-rich-item-renderer {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-bottom: 26px !important;
+}
+
+.ytLockupViewModelHost.ytLockupViewModelVertical,
+ytd-rich-grid-media,
+ytd-grid-video-renderer #dismissible {
+    position: relative !important;
+    box-sizing: border-box !important;
+    padding: 10px !important;
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-lg) !important;
+    box-shadow: var(--ios-shadow-md), var(--ios-rim-top) !important;
+    transition: transform var(--ios-dur-med) var(--ios-spring),
+                background-color var(--ios-dur-med) var(--ios-spring),
+                border-color var(--ios-dur-med) var(--ios-spring),
+                box-shadow var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+.ytLockupViewModelHost.ytLockupViewModelVertical:hover,
+ytd-rich-grid-media:hover,
+ytd-grid-video-renderer #dismissible:hover {
+    transform: translateY(-6px) !important;
+    background: var(--ios-glass-2) !important;
+    border-color: var(--ios-hairline-strong) !important;
+    box-shadow: var(--ios-shadow-lg), var(--ios-rim-top) !important;
+}
+
+/* Thumbnail zooms inside the clipped frame, not the frame itself. */
+yt-thumbnail-view-model,
+.ytThumbnailViewModelImage,
+ytd-thumbnail,
+ytd-thumbnail #thumbnail,
+ytd-thumbnail img,
+.ytThumbnailViewModelImage img {
+    transition: transform var(--ios-dur-slow) var(--ios-spring) !important;
+}
+
+yt-thumbnail-view-model,
+.ytThumbnailViewModelImage {
+    overflow: hidden !important;
+    border-radius: var(--ios-r-md) !important;
+}
+
+.ytLockupViewModelHost.ytLockupViewModelVertical:hover .ytThumbnailViewModelImage,
+ytd-rich-grid-media:hover ytd-thumbnail,
+ytd-grid-video-renderer #dismissible:hover ytd-thumbnail {
+    transform: scale(1.05) !important;
+}
+
+/* Card typography. */
+.ytLockupMetadataViewModelTitle,
+ytd-rich-grid-media #video-title,
+ytd-grid-video-renderer #video-title,
+ytd-video-renderer #video-title {
+    color: var(--ios-text) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.005em !important;
+}
+
+.ytContentMetadataViewModelMetadataRow,
+ytd-rich-grid-media #metadata-line,
+ytd-grid-video-renderer #metadata-line,
+ytd-video-renderer #metadata-line,
+.ytLockupMetadataViewModelMenuButton {
+    color: var(--ios-text-dim) !important;
+    font-size: 13px !important;
+}
+
+.ytLockupMetadataViewModel,
+ytd-rich-grid-media #meta {
+    padding: 12px 4px 4px 4px !important;
+}
+
+/* Overflow menu appears on hover (and always on touch devices). */
+.ytLockupMetadataViewModelMenuButton {
+    opacity: 0 !important;
+    transition: opacity var(--ios-dur-fast) ease, background-color var(--ios-dur-fast) ease !important;
+}
+
+.ytLockupViewModelHost.ytLockupViewModelVertical:hover .ytLockupMetadataViewModelMenuButton {
+    opacity: 1 !important;
+}
+
+.ytLockupMetadataViewModelMenuButton button {
+    background: transparent !important;
+    border-radius: 50% !important;
+}
+
+.ytLockupMetadataViewModelMenuButton button:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+@media (hover: none) {
+    .ytLockupMetadataViewModelMenuButton {
+        opacity: 1 !important;
+    }
+}
+
+/* Duration / live badges sit on their own glass chip. */
+ytd-thumbnail-overlay-time-status-renderer,
+.ytThumbnailBottomOverlayViewModelBadgeContainer,
+badge-shape.ytBadgeShapeThumbnailBadge,
+ytd-badge-supported-renderer .badge-shape {
+    background: rgba(6, 8, 14, 0.78) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+}
+
+ytd-thumbnail-overlay-resume-playback-renderer {
+    background: rgba(6, 8, 14, 0.78) !important;
+    border-radius: var(--ios-r-pill) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+/* Watched progress hairline. */
+ytd-thumbnail #progress.ytd-thumbnail,
+.ytThumbnailOverlayProgressBarViewModelHost {
+    background: var(--ios-accent) !important;
+    height: 3px !important;
+    border-radius: var(--ios-r-pill) !important;
+}
+
+/* Channel avatar chip under the title. */
+yt-img-shadow,
+yt-img-shadow img,
+ytd-video-renderer #channel-thumbnail {
+    border-radius: 50% !important;
+}
+
+/* ==========================================================================
+   12. ROW LISTS â€” SEARCH RESULTS, PLAYLIST PANEL, RELATED
+   Rows stay flat: a lifted card per row would make scanning worse.
+   ========================================================================== */
+ytd-video-renderer,
+ytd-compact-video-renderer,
+ytd-playlist-video-renderer,
+ytd-playlist-panel-video-renderer,
+ytd-video-preview,
+ytd-compact-playlist-video-renderer {
+    border-radius: var(--ios-r-md) !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                box-shadow var(--ios-dur-fast) ease !important;
+}
+
+ytd-video-renderer #dismissible,
+ytd-compact-video-renderer #dismissible,
+ytd-playlist-panel-video-renderer #dismissible,
+ytd-compact-video-renderer,
+ytd-playlist-panel-video-renderer,
+ytd-video-preview {
+    padding: 10px !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--ios-r-md) !important;
+}
+
+ytd-video-renderer:hover #dismissible,
+ytd-compact-video-renderer:hover #dismissible,
+ytd-playlist-panel-video-renderer:hover #dismissible,
+ytd-compact-video-renderer:hover,
+ytd-playlist-panel-video-renderer:hover,
+ytd-video-preview:hover {
+    background: var(--ios-glass-1) !important;
+    border-color: var(--ios-hairline) !important;
+    box-shadow: var(--ios-shadow-sm) !important;
+}
+
+ytd-playlist-panel-video-renderer[is-selected],
+ytd-playlist-panel-video-renderer[selected] {
+    background: var(--ios-fill-medium) !important;
+}
+
+ytd-compact-video-renderer #title,
+ytd-playlist-panel-video-renderer #title,
+ytd-video-renderer #video-title {
+    color: var(--ios-text) !important;
+    font-weight: 600 !important;
+}
+
+ytd-compact-video-renderer #metadata-line,
+ytd-playlist-panel-video-renderer #metadata,
+ytd-compact-video-renderer #short-byline,
+ytd-video-renderer #channel-name,
+ytd-video-renderer #metadata-line {
+    color: var(--ios-text-dim) !important;
+    font-size: 13px !important;
+}
+
+ytd-compact-video-renderer ytd-thumbnail,
+ytd-playlist-panel-video-renderer ytd-thumbnail,
+ytd-video-preview ytd-thumbnail,
+ytd-video-renderer ytd-thumbnail {
+    border-radius: var(--ios-r-sm) !important;
+    overflow: hidden !important;
+}
+
+/* ==========================================================================
+   13. SHELVES & SHORTS
+   ========================================================================== */
+ytd-rich-section-renderer,
+ytd-rich-shelf-renderer,
+ytd-item-section-renderer {
+    background: transparent !important;
+}
+
+ytd-rich-section-renderer > #header,
+ytd-shelf-renderer #header,
+ytd-reel-shelf-renderer #header {
+    background: transparent !important;
+    margin: 0 0 14px 0 !important;
+    padding: 0 0 0 4px !important;
+}
+
+#title.ytd-rich-section-renderer,
+#title.ytd-shelf-renderer,
+h2 #title,
+ytd-rich-section-renderer #title {
+    color: var(--ios-text) !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+}
+
+ytd-rich-shelf-renderer[is-shorts],
+ytd-reel-shelf-renderer {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 0 30px 0 !important;
+}
+
+ytd-reel-item-renderer,
+ytd-shorts-lockup-view-model,
+ytd-shorts-lockup-view-model-v2 {
+    border-radius: var(--ios-r-lg) !important;
+    overflow: hidden !important;
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    box-shadow: var(--ios-shadow-md) !important;
+    transition: transform var(--ios-dur-med) var(--ios-spring),
+                background-color var(--ios-dur-med) var(--ios-spring),
+                box-shadow var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+ytd-reel-item-renderer:hover,
+ytd-shorts-lockup-view-model:hover {
+    transform: translateY(-4px) !important;
+    background: var(--ios-glass-2) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+}
+
+ytd-reel-item-renderer a,
+ytd-shorts-lockup-view-model a.yt-simple-endpoint {
+    border-radius: var(--ios-r-lg) !important;
+}
+
+ytd-reel-item-renderer #overlay-text,
+ytd-reel-item-renderer .ytReelItemRendererHost {
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ==========================================================================
+   14. WATCH PAGE
+   ========================================================================== */
+ytd-watch-metadata #title h1 {
+    color: var(--ios-text) !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+}
+
+ytd-watch-metadata #owner {
+    padding: 12px 0 !important;
+}
+
+ytd-video-owner-renderer #channel-name a,
+ytd-video-owner-renderer #text {
+    color: var(--ios-text) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+ytd-video-owner-renderer #channel-name {
+    color: var(--ios-text-dim) !important;
+    font-size: 12px !important;
+}
+
+ytd-video-owner-renderer yt-img-shadow img {
+    border-radius: 50% !important;
+    box-shadow: 0 0 0 1px var(--ios-hairline) !important;
+}
+
+/* Every action button becomes a glass pill. */
+#actions-inner,
+#top-level-buttons-computed,
+#flexible-item-buttons,
+#bottom-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+/* Action row alignment. YouTube puts both button groups in one row flex that
+   top-aligns a 42px group against a 50px group, hangs margin:-8px on the
+   menu and margin-bottom:8px on the top-level group, so the Save pill drops
+   4px below like/dislike. Pin the whole chain to the 40px button height. */
+ytd-watch-metadata #actions-inner,
+ytd-watch-metadata #actions-inner #menu,
+ytd-watch-metadata #actions-inner ytd-menu-renderer,
+ytd-watch-metadata #top-level-buttons-computed,
+ytd-watch-metadata #flexible-item-buttons,
+ytd-watch-metadata segmented-like-dislike-button-view-model {
+    display: flex !important;
+    align-items: center !important;
+    height: 40px !important;
+}
+
+ytd-watch-metadata #actions-inner ytd-menu-renderer,
+ytd-watch-metadata #top-level-buttons-computed,
+ytd-watch-metadata #flexible-item-buttons {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#actions-inner yt-button-shape,
+#actions-inner button.ytSpecButtonShapeNextHost,
+#bottom-actions button.ytSpecButtonShapeNextHost,
+#top-level-buttons-computed button.ytSpecButtonShapeNextHost,
+#flexible-item-buttons button.ytSpecButtonShapeNextHost,
+ytd-watch-metadata yt-button-shape button,
+ytd-watch-metadata yt-button-shape a {
+    border-radius: var(--ios-r-pill) !important;
+}
+
+button.ytSpecButtonShapeNextTonal,
+#actions-inner .ytSpecButtonShapeNextTonal {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    color: var(--ios-text) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                border-color var(--ios-dur-fast) ease,
+                transform var(--ios-dur-fast) var(--ios-spring) !important;
+}
+
+button.ytSpecButtonShapeNextTonal:hover {
+    background: var(--ios-glass-3) !important;
+    border-color: var(--ios-hairline-strong) !important;
+}
+
+button.ytSpecButtonShapeNextTonal:active {
+    transform: scale(0.96) !important;
+}
+
+segmented-like-dislike-button-view-model,
+.ytSegmentedLikeDislikeButtonViewModelHost {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    overflow: hidden !important;
+}
+
+segmented-like-dislike-button-view-model button {
+    border-radius: var(--ios-r-pill) !important;
+    transition: background-color var(--ios-dur-fast) ease !important;
+}
+
+segmented-like-dislike-button-view-model button:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+/* Channel header actions and the watch-page subscribe pill. */
+yt-subscribe-button-view-model button,
+#owner ytd-subscribe-button-renderer button,
+ytd-subscribe-button-renderer .ytSubscribeButtonRendererHost button {
+    border-radius: var(--ios-r-pill) !important;
+    font-weight: 700 !important;
+}
+
+/* Description panel. The glass lives on the outer box only. */
+ytd-watch-metadata #description,
+ytd-watch-metadata #description-inner {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-lg) !important;
+    box-shadow: var(--ios-shadow-sm) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    transition: background-color var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+/* #description-inner is nested inside the panel, so a second glass layer just
+   doubled the opacity and the blur cost for no visual gain. */
+ytd-watch-metadata #description-inner {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* yt-interaction is the ink layer, absolutely positioned over the entire
+   description. Filling it with translucent glass plus a backdrop blur veiled
+   and blurred the text sitting underneath it â€” it has to stay see-through. */
+ytd-watch-metadata yt-interaction#description-interaction {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+ytd-watch-metadata #description:hover {
+    background: var(--ios-glass-2) !important;
+}
+
+/* The description body is a ytd-text-inline-expander in the 2026 build and
+   a plain .yt-core-attributed-string in older ones â€” cover both. */
+ytd-watch-metadata #description .yt-core-attributed-string,
+ytd-watch-metadata #description yt-attributed-string,
+ytd-watch-metadata #description .yt-formatted-string,
+ytd-watch-metadata ytd-text-inline-expander yt-attributed-string,
+ytd-watch-metadata ytd-text-inline-expander .yt-formatted-string {
+    color: var(--ios-text) !important;
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+}
+
+ytd-watch-metadata #description .yt-core-attributed-string,
+ytd-watch-metadata #description yt-attributed-string,
+ytd-watch-metadata #description .yt-formatted-string {
+    white-space: pre-wrap !important;
+}
+
+ytd-watch-metadata #description-inline-expander #expand,
+ytd-watch-metadata #description-inline-expander #collapse,
+ytd-watch-metadata tp-yt-paper-button#expand,
+ytd-watch-metadata tp-yt-paper-button#collapse,
+#description .yt-core-attributed-string--expandable {
+    color: var(--ios-text) !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+}
+
+ytd-watch-metadata tp-yt-paper-button#expand:hover,
+ytd-watch-metadata tp-yt-paper-button#collapse:hover {
+    background: var(--ios-fill-medium) !important;
+    border-radius: var(--ios-r-sm) !important;
+}
+
+/* Views / upload date strip. */
+ytd-watch-info-text,
+#info-strings,
+ytd-watch-info-text-renderer {
+    color: var(--ios-text-dim) !important;
+    font-size: 13px !important;
+}
+
+/* Right column: nudge the related list clear of the dock. */
+ytd-watch-next-secondary-results-renderer #related {
+    padding-top: 8px !important;
+}
+
+ytd-playlist-panel-renderer #container {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-lg) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    overflow: hidden !important;
+}
+
+ytd-playlist-panel-renderer #items {
+    padding: 6px !important;
+}
+
+/* ==========================================================================
+   15. COMMENTS
+   ========================================================================== */
+ytd-comments #header,
+ytd-comments-header-renderer {
+    background: transparent !important;
+    padding: 12px 0 8px 0 !important;
+}
+
+ytd-comments #count,
+ytd-comments-header-renderer #count {
+    color: var(--ios-text) !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+}
+
+ytd-comments #sort,
+ytd-comments #sort-button,
+.ytSortingDropdownFormViewModelHost button {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+    color: var(--ios-text) !important;
+    font-weight: 600 !important;
+}
+
+/* Comment composer. */
+ytd-comments #input-container,
+ytd-comment-view-model #comment-composer,
+ytd-comment-thread-renderer #comment-composer,
+#comment-viewer,
+ytd-comments textarea,
+ytd-comment-view-model textarea {
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-md) !important;
+    color: var(--ios-text) !important;
+}
+
+ytd-comments textarea:focus,
+ytd-comment-view-model textarea:focus {
+    background: var(--ios-fill-medium) !important;
+    border-color: rgba(88, 166, 255, 0.55) !important;
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.14) !important;
+    outline: none !important;
+}
+
+ytd-comment-thread-renderer,
+ytd-comment-renderer,
+ytd-comment-view-model {
+    border-radius: var(--ios-r-md) !important;
+    transition: background-color var(--ios-dur-fast) ease !important;
+}
+
+ytd-comment-thread-renderer:hover,
+ytd-comment-renderer:hover,
+ytd-comment-view-model:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+#content.ytd-comment-renderer,
+ytd-comment-view-model #content {
+    padding: 8px 12px !important;
+}
+
+#content-text.ytd-comment-renderer,
+ytd-comment-view-model #content-text {
+    color: var(--ios-text) !important;
+    line-height: 1.5 !important;
+}
+
+#author-text.ytd-comment-renderer,
+ytd-comment-view-model #author-text {
+    color: var(--ios-text) !important;
+    font-weight: 600 !important;
+}
+
+#published-time-text.ytd-comment-renderer,
+ytd-comment-view-model #published-time-text,
+#vote-count-middle.ytd-comment-renderer {
+    color: var(--ios-text-faint) !important;
+    font-size: 12px !important;
+}
+
+ytd-comment-renderer #reply-button-endpoint,
+ytd-comment-view-model #reply-button-endpoint {
+    color: var(--ios-accent) !important;
+    font-weight: 600 !important;
+}
+
+ytd-button-renderer #reply-button-endpoint,
+.ytCommentActionButtonsViewModelHost button {
+    border-radius: var(--ios-r-pill) !important;
+    color: var(--ios-text-dim) !important;
+}
+
+ytd-button-renderer #reply-button-endpoint:hover,
+.ytCommentActionButtonsViewModelHost button:hover {
+    background: var(--ios-fill-medium) !important;
+    color: var(--ios-text) !important;
+}
+
+/* ==========================================================================
+   16. CHANNEL, PLAYLIST & LIBRARY PAGES
+   The 2026 channel header is yt-page-header-renderer > yt-page-header-view-model;
+   ytd-c4-tabbed-header-renderer is kept for older builds.
+   ========================================================================== */
+ytd-browse[page-subtype="channels"] #header.ytd-c4-tabbed-header-renderer,
+ytd-c4-tabbed-header-renderer #header,
+ytd-tabbed-page-header #page-header,
+yt-page-header-renderer {
+    background: transparent !important;
+}
+
+ytd-c4-tabbed-header-renderer #avatar,
+ytd-c4-tabbed-header-renderer yt-img-shadow img,
+yt-content-preview-image-view-model,
+yt-content-preview-image-view-model img {
+    border-radius: 50% !important;
+}
+
+yt-content-preview-image-view-model,
+ytd-c4-tabbed-header-renderer #avatar {
+    box-shadow: 0 0 0 1px var(--ios-hairline-strong), 0 10px 28px rgba(0, 0, 0, 0.45) !important;
+}
+
+ytd-browse[page-subtype="channels"] #channel-header #name,
+ytd-c4-tabbed-header-renderer #channel-name,
+yt-dynamic-text-view-model.ytPageHeaderViewModelTitleLarge h1 {
+    color: var(--ios-text) !important;
+}
+
+ytd-c4-tabbed-header-renderer #channel-header #description,
+ytd-c4-tabbed-header-renderer .ytContentMetadataViewModelMetadataRow,
+yt-page-header-view-model .ytPageHeaderViewModelMetadata,
+.ytPageHeaderViewModelDescription {
+    color: var(--ios-text-dim) !important;
+}
+
+yt-subscribe-button-view-model button,
+ytd-subscribe-button-renderer .ytSubscribeButtonRendererHost button {
+    border-radius: var(--ios-r-pill) !important;
+    font-weight: 700 !important;
+}
+
+ytd-browse[page-subtype="playlists"] ytd-lockup-view-model .ytLockupViewModelHost,
+ytd-browse[page-subtype="playlists"] ytd-grid-playlist-renderer #dismissible {
+    border-radius: var(--ios-r-lg) !important;
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    box-shadow: var(--ios-shadow-md) !important;
+    overflow: hidden !important;
+    transition: transform var(--ios-dur-med) var(--ios-spring),
+                background-color var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+ytd-browse[page-subtype="playlists"] ytd-lockup-view-model .ytLockupViewModelHost:hover,
+ytd-browse[page-subtype="playlists"] ytd-grid-playlist-renderer #dismissible:hover {
+    transform: translateY(-4px) !important;
+    background: var(--ios-glass-2) !important;
+}
+
+ytd-playlist-header-renderer,
+ytd-playlist-header-renderer #header {
+    background: transparent !important;
+}
+
+ytd-playlist-video-renderer,
+ytd-playlist-panel-renderer {
+    color: var(--ios-text) !important;
+}
+
+/* Notification / history / subscriptions lists. */
+ytd-notification-topbar,
+ytd-rich-grid-renderer {
+    background: transparent !important;
+}
+
+ytd-rich-item-renderer > #content {
+    background: transparent !important;
+}
+
+/* Bulk-action selection mode. */
+ytd-rich-item-renderer[is-selected] .ytLockupViewModelHost.ytLockupViewModelVertical,
+ytd-video-renderer[is-selected] #dismissible {
+    background: rgba(88, 166, 255, 0.16) !important;
+    border-color: rgba(88, 166, 255, 0.55) !important;
+}
+
+ytd-checkbox-container #checkbox {
+    border-radius: 6px !important;
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+}
+
+#radio-button {
+    border-color: var(--ios-hairline-strong) !important;
+}
+
+/* ==========================================================================
+   17. POPOVERS, MENUS, DIALOGS, TOOLTIPS, SNACKBARS
+   ========================================================================== */
+tp-yt-paper-listbox,
+ytd-menu-renderer tp-yt-paper-listbox,
+.dropdown,
+ytd-multi-page-menu-renderer,
+ytd-popup-container tp-yt-paper-popup,
+.yt-popup-container .tp-yt-paper-popup,
+yt-dialog-shape,
+tp-yt-paper-dialog,
+ytd-popup-container .yt-alert,
+.ytContainer {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur-strong)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-lg) !important;
+    box-shadow: var(--ios-shadow-lg), var(--ios-rim-top) !important;
+    overflow: hidden !important;
+}
+
+tp-yt-paper-listbox .yt-spec-paper-item,
+ytd-menu-renderer tp-yt-paper-item,
+tp-yt-paper-item,
+ytd-menu-service-item-renderer,
+.ytHorizontalChipListViewModelHost yt-horizontal-chip-list-item-renderer {
+    border-radius: 0 !important;
+    transition: background-color var(--ios-dur-fast) ease !important;
+}
+
+tp-yt-paper-listbox .yt-spec-paper-item:hover,
+ytd-menu-service-item-renderer:hover,
+tp-yt-paper-item:hover {
+    background: var(--ios-fill-medium) !important;
+}
+
+ytd-menu-service-item-renderer yt-formatted-string,
+tp-yt-paper-item .yt-spec-button-shape-next__label {
+    color: var(--ios-text) !important;
+}
+
+ytd-menu-service-item-renderer yt-formatted-string[aria-label*="Delete"] {
+    color: var(--ios-danger) !important;
+}
+
+ytd-menu-renderer tp-yt-paper-listbox #items {
+    padding: 6px !important;
+}
+
+/* Dialogs keep YouTube's own sizes; only the surface is themed. */
+tp-yt-paper-dialog .dialog-header,
+.yt-dialog-header {
+    color: var(--ios-text) !important;
+}
+
+ytd-popup-container .yt-alert yt-formatted-string,
+tp-yt-paper-dialog yt-formatted-string {
+    color: var(--ios-text) !important;
+}
+
+tp-yt-paper-tooltip,
+ytd-tooltip,
+.ytp-tooltip-title,
+.ytp-tooltip-text {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-xs) !important;
+    color: var(--ios-text) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+tp-yt-paper-tooltip::before,
+tp-yt-paper-tooltip::after,
+.ytp-tooltip-bg {
+    background: var(--ios-glass-3) !important;
+}
+
+.ytp-tooltip-textWrapper,
+.ytp-tooltip-title {
+    background: transparent !important;
+}
+
+ytd-alert-with-button-renderer,
+ytd-snackbar-content-renderer,
+.ytNotificationViewModelHost {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-md) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+}
+
+ytd-alert-with-button-renderer .text,
+ytd-snackbar-content-renderer .yt-alert-message-text {
+    color: var(--ios-text) !important;
+}
+
+/* Notification / account panels get a floating glass sheet. */
+ytd-notification-topbar,
+ytd-multi-page-menu-renderer,
+ytd-popup-container ytd-account-image-renderer {
+    border-radius: var(--ios-r-lg) !important;
+}
+
+yt-formatted-string#content,
+ytd-notification-topbar yt-formatted-string {
+    color: var(--ios-text) !important;
+}
+
+ytd-notification-topbar ytd-rich-item-renderer,
+ytd-notification-topper-renderer {
+    border-radius: var(--ios-r-md) !important;
+}
+
+/* ==========================================================================
+   18. PLAYER (ytp-*)
+   ========================================================================== */
+.ytp-chrome-bottom,
+.ytp-chrome-top {
+    transition: opacity var(--ios-dur-med) var(--ios-spring) !important;
+}
+
+.ytp-gradient-top {
+    background: linear-gradient(180deg, rgba(4, 5, 9, 0.72) 0%, transparent 100%) !important;
+}
+
+.ytp-gradient-bottom {
+    background: linear-gradient(0deg, rgba(4, 5, 9, 0.80) 0%, transparent 100%) !important;
+}
+
+.ytp-button {
+    border-radius: var(--ios-r-xs) !important;
+    transition: background-color var(--ios-dur-fast) ease,
+                transform var(--ios-dur-fast) var(--ios-spring) !important;
+}
+
+.ytp-button:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+}
+
+.ytp-button:active {
+    transform: scale(0.92) !important;
+}
+
+.ytp-progress-bar {
+    height: 4px !important;
+}
+
+.ytp-progress-bar-container,
+.ytp-scrubber-container,
+.ytp-load-progress-bar,
+.ytp-play-progress-bar,
+.ytp-hover-progress-bar {
+    border-radius: var(--ios-r-pill) !important;
+}
+
+.ytp-load-progress-bar {
+    background: rgba(255, 255, 255, 0.28) !important;
+}
+
+.ytp-play-progress-bar {
+    background: var(--ios-danger) !important;
+}
+
+.ytp-hover-progress-bar {
+    background: rgba(255, 255, 255, 0.55) !important;
+}
+
+.ytp-chapter-title-content,
+.ytp-cards-teaser .ytp-cards-teaser-title {
+    background: rgba(6, 8, 14, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-weight: 600 !important;
+}
+
+.ytp-cards-button,
+.ytp-cards-teaser {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-sm) !important;
+}
+
+.ytp-hover-card {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-md) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+    overflow: hidden !important;
+}
+
+.ytp-hover-card .ytp-hover-card-content,
+.ytp-hover-card .ytp-hover-card-title {
+    color: var(--ios-text) !important;
+}
+
+.ytp-settings-button .ytp-settings {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-md) !important;
+    box-shadow: var(--ios-shadow-md) !important;
+    overflow: hidden !important;
+}
+
+.ytp-settings-menu .ytp-menu-item,
+.ytp-settings-menu .ytp-opt {
+    color: var(--ios-text) !important;
+}
+
+.ytp-settings-menu .ytp-opt[disabled] {
+    color: var(--ios-text-faint) !important;
+}
+
+.ytp-large-play-button {
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 50% !important;
+    background: rgba(6, 8, 14, 0.4) !important;
+    opacity: 0.92 !important;
+}
+
+.ytp-large-play-button:hover {
+    background: rgba(88, 166, 255, 0.28) !important;
+    transform: scale(1.06) !important;
+}
+
+.ytp-endscreen-content .ytp-endscreen-end-element {
+    border-radius: var(--ios-r-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+}
+
+.ytp-paid-content-overlay,
+.ytp-cued-thumbnail-overlay,
+ytd-player-legacy-desktop-watch-ad-renderer .ytp-ad-overlay {
+    background: rgba(4, 5, 9, 0.72) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* Ambient mode / theatre background dimming to match the page. */
+.html5-video-player,
+.html5-video-player.ytp-big-mode,
+.ytp-iv-watermark {
+    background-color: transparent !important;
+}
+
+ytd-miniplayer {
+    background: var(--ios-glass-3) !important;
+    backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--ios-blur)) saturate(var(--ios-saturate)) !important;
+    border: 1px solid var(--ios-hairline-strong) !important;
+    border-radius: var(--ios-r-md) !important;
+    box-shadow: var(--ios-shadow-lg) !important;
+    overflow: hidden !important;
+}
+
+.ytp-miniplayer-title,
+ytd-miniplayer .title {
+    color: var(--ios-text) !important;
+}
+
+/* ==========================================================================
+   19. LIVE CHAT & ENGAGEMENT PANELS
+   ========================================================================== */
+ytd-live-chat-frame {
+    background: var(--ios-glass-1) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-lg) !important;
+    overflow: hidden !important;
+}
+
+#chat-container.ytd-watch-flexy,
+ytd-live-chat-frame #chat-container {
+    background: transparent !important;
+}
+
+ytd-live-chat-message #message,
+ytd-live-chat-text-message #message {
+    color: var(--ios-text) !important;
+}
+
+ytd-live-chat-message yt-live-chat-author-name,
+#author-name.ytd-live-chat-message {
+    color: var(--ios-text) !important;
+}
+
+ytd-live-chat-frame #input-box,
+ytd-live-chat-frame tp-yt-paper-input-container {
+    background: var(--ios-fill-soft) !important;
+    border: 1px solid var(--ios-hairline) !important;
+    border-radius: var(--ios-r-pill) !important;
+}
+
+ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-comments-section"],
+ytd-engagement-panel-section-list-renderer[target-id^="engagement-panel-supplementary"] {
+    border-radius: var(--ios-r-lg) !important;
+    overflow: hidden !important;
+}
+
+ytd-reel-shelf-renderer[is-shorts] ytd-rich-item-renderer {
+    margin-bottom: 0 !important;
+}
+
+/* ==========================================================================
+   20. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1315px) {
+    :root {
+        --ios-gutter: 16px;
+    }
+    .ytLockupViewModelHost.ytLockupViewModelVertical,
+    ytd-rich-grid-media,
+    ytd-grid-video-renderer #dismissible {
+        border-radius: var(--ios-r-md) !important;
+        padding: 8px !important;
+    }
+}
+
+@media (max-width: 1015px) {
+    #masthead-container.ytd-app {
+        padding: var(--ios-dock-top) 12px 0 12px !important;
+    }
+    ytd-feed-filter-chip-bar-renderer {
+        margin-left: 12px !important;
+        margin-right: 12px !important;
+    }
+    .ytSearchboxComponentInputWrapper {
+        height: 40px !important;
+    }
+}
+
+@media (max-width: 655px) {
+    :root {
+        --ios-dock-h: 56px;
+        --ios-gutter: 8px;
+    }
+    ytd-masthead {
+        border-radius: var(--ios-r-lg) !important;
+    }
+    .ytLockupViewModelHost.ytLockupViewModelVertical:hover,
+    ytd-rich-grid-media:hover,
+    ytd-grid-video-renderer #dismissible:hover,
+    ytd-reel-item-renderer:hover,
+    ytd-shorts-lockup-view-model:hover {
+        transform: none !important;
+    }
+    .ytLockupMetadataViewModelMenuButton {
+        opacity: 1 !important;
+    }
+    ytd-watch-metadata #description,
+    ytd-watch-metadata #description-inner {
+        border-radius: var(--ios-r-md) !important;
+    }
+}
+
+/* Fullscreen: the dock must not float over the player. */
+.ytp-big-mode #masthead-container.ytd-app,
+ytd-app[player-fullscreened] #masthead-container.ytd-app {
+    display: none !important;
+}
+
+ytd-app[player-fullscreened] #page-manager {
+    margin-top: 0 !important;
+}

@@ -1,0 +1,25 @@
+{
+  "name": "youtube-desktop",
+  "version": "1.0.0",
+  "description": "YouTube desktop app built on Electron with a glassmorphism dark theme.",
+  "main": "main.js",
+  "author": "Brodie Grant",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer-core": "^25.10.0"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-packager": "^17.1.2"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "node scripts/build.js"
+  },
+  "keywords": [
+    "youtube",
+    "electron",
+    "desktop"
+  ]
+}
