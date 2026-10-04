@@ -8,7 +8,7 @@ const packager = require('electron-packager');
 
 const opts = {
   name: 'youtube-desktop',
-  app: appDir,
+  dir: appDir,
   platform: 'win32',
   arch: 'x64',
   out: path.join(appDir, 'dist'),
