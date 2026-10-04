@@ -2,7 +2,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const appDir = __dirname;
+const appDir = path.join(__dirname, '..');
 const pkg = require(path.join(appDir, 'package.json'));
 const packager = require('electron-packager');
 
