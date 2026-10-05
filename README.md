@@ -16,11 +16,12 @@ No accounts, no API keys, no browser chrome, no ads stripped by extension hacks.
 - **Native window** — 1280x720, frameless chrome-free look with the menu bar auto-hidden and a bundled app icon.
 - **Live theme editing** — `F12` (or `Ctrl+Shift+I` / `Ctrl+Shift+J`) opens DevTools, so the glass can be tuned in place instead of guessed at from screenshots.
 - **Scriptable debugging** — set `YOUTUBE_APP_DEBUG_PORT` to expose the DevTools protocol for an external inspector or an automated styling check. Off by default.
-- **One-command Windows build** — `npm run build` packages a self-contained `.exe` via `electron-packager`. GitHub Actions builds on every push and publishes a release on `v*` tags.
+- **One-command Windows build** — `npm run build` packages a self-contained `.exe` via `@electron/packager`. GitHub Actions builds on every push and publishes a release on `v*` tags.
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 20 or newer (Node 22 recommended)
+- [Node.js](https://nodejs.org) 20 or newer (Node 20 LTS recommended) — this is the floor
+  `@electron/packager` imposes, not a preference.
 - Windows 10/11. The build script is pinned to `win32-x64`; cross-platform packaging is a matter of changing `platform`/`arch` in `scripts/build.js`.
 
 ## Usage
@@ -53,13 +54,13 @@ The file is generated from a Stylus userstyle (`youtube.theme`); the `@-moz-docu
 ```
 main.js               Electron entry point — window creation, theme injection, DevTools
 youtube-glass.css     The Liquid Glass theme, injected into every page load
-scripts/build.js      electron-packager build for win32-x64
+scripts/build.js      @electron/packager build for win32-x64
 .github/workflows/    Build on push, release on tag
 ```
 
 ## Security
 
-The renderer runs with `nodeIntegration: false` and `contextIsolation: true`, so the YouTube page has no access to Node. Theme injection happens in the main process via `webContents.insertCSS` and never evaluates page-sourced code.
+The renderer runs with `nodeIntegration: false`, `contextIsolation: true` and `sandbox: true`, so the YouTube page has no access to Node. Pop-outs and navigations away from `youtube.com` are refused, device permissions are allow-listed, and theme injection happens in the main process via `webContents.insertCSS` and never evaluates page-sourced code. DevTools are enabled by `npm start` only, never in the packaged app.
 
 ## License
 

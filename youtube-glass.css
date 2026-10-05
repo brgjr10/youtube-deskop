@@ -29,6 +29,14 @@
 
     --ios-text: #f2f5fa;
     --ios-text-dim: #aab2c2;
+    /* Secondary metadata (12px timestamps, vote counts, placeholders) still has
+       to clear 4.5:1, and the glass fills are translucent so the real backdrop
+       is whatever the page paints under them. Measured against the pinned
+       #05060a page backdrop these are 7.4:1 on glass-1, 7.4:1 on glass-2 and
+       7.0:1 on glass-3 - see test/theme-contrast.test.js. */
+    --ios-text-muted: #9aa2b2;
+    /* Decorative only. 45% white is 4.25:1 on glass-3 and 2.0:1 with anything
+       bright behind the glass, so it must never carry text a user has to read. */
     --ios-text-faint: rgba(255, 255, 255, 0.45);
     --ios-accent: #58a6ff;
     --ios-danger: #f85149;
@@ -250,6 +258,30 @@ ytd-browse[page-subtype="playlists"] {
     }
 }
 
+/* Windows High Contrast / forced-colors replaces author colours with system
+   colours and drops backdrop-filter entirely, which would leave the glass
+   layers transparent with no opaque fill behind the text. Same treatment the
+   reduced-transparency block above already gets. */
+@media (forced-colors: active) {
+    ytd-masthead,
+    #guide-content,
+    ytd-mini-guide-renderer,
+    ytd-feed-filter-chip-bar-renderer,
+    tp-yt-paper-listbox,
+    ytd-menu-renderer,
+    tp-yt-paper-dialog,
+    ytd-playlist-panel-renderer #container {
+        background: Canvas !important;
+        border: 1px solid CanvasText !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    :focus-visible {
+        outline: 2px solid Highlight !important;
+    }
+}
+
 /* No backdrop-filter support: fall back to opaque fills. */
 @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
     .ytLockupViewModelHost.ytLockupViewModelVertical,
@@ -372,7 +404,7 @@ input.ytSearchboxComponentInput,
 }
 
 input.ytSearchboxComponentInput::placeholder {
-    color: var(--ios-text-faint) !important;
+    color: var(--ios-text-muted) !important;
 }
 
 /* Focus bloom lives on the host so the whole pill reacts, not just the text. */
@@ -556,7 +588,7 @@ ytd-guide-renderer #footer {
 }
 
 ytd-guide-section-renderer h3 {
-    color: var(--ios-text-faint) !important;
+    color: var(--ios-text-muted) !important;
     font-size: 12px !important;
     font-weight: 700 !important;
     letter-spacing: 0.08em !important;
@@ -1428,7 +1460,7 @@ ytd-comment-view-model #author-text {
 #published-time-text.ytd-comment-renderer,
 ytd-comment-view-model #published-time-text,
 #vote-count-middle.ytd-comment-renderer {
-    color: var(--ios-text-faint) !important;
+    color: var(--ios-text-muted) !important;
     font-size: 12px !important;
 }
 
@@ -1770,7 +1802,7 @@ ytd-notification-topper-renderer {
 }
 
 .ytp-settings-menu .ytp-opt[disabled] {
-    color: var(--ios-text-faint) !important;
+    color: var(--ios-text-muted) !important;
 }
 
 .ytp-large-play-button {

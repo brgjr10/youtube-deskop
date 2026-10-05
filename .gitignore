@@ -1,9 +1,17 @@
 # Build output
 dist/
 
+# electron-packager stages into <temp>/electron-packager/<platform>-<arch>-template-*
+# and leaks the directory when a build stops early. One of these was committed
+# by accident at 69cfd66 and removed again at 8e7d959.
+*-template-*/
+
 # Node
 node_modules/
 .npm/
+
+# Tool logs (electron, the packager and npm all write these during a build)
+*.log
 
 # OS / editor
 .DS_Store

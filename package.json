@@ -6,16 +6,17 @@
   "author": "Brodie Grant",
   "license": "ISC",
   "type": "commonjs",
-  "dependencies": {
-    "puppeteer-core": "^25.10.0"
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
-    "electron": "^44.5.1",
-    "electron-packager": "^17.1.2"
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.5.1"
   },
   "scripts": {
     "start": "electron .",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "test": "node --test"
   },
   "keywords": [
     "youtube",
