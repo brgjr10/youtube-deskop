@@ -4,19 +4,19 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -26,6 +26,31 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Read version from package.json
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Create and push tag
+        id: tag
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v${{ steps.version.outputs.version }}"
+          $existing = git tag -l $tag
+          if ($existing) {
+            "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            git config user.email "action@github.com"
+            git config user.name "GitHub Action"
+            git tag $tag
+            git push origin $tag
+            "exists=false" >> $env:GITHUB_OUTPUT
+          }
 
       - name: Build Windows executable
         run: npm run build
@@ -41,21 +66,12 @@ jobs:
           "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
           "name=$($exe.Name)" >> $env:GITHUB_OUTPUT
 
-      - name: Create tag & release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           files: ${{ steps.artifact.outputs.path }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifact
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: youtube-desktop-windows
-          path: ${{ steps.artifact.outputs.path }}
-          retention-days: 7
