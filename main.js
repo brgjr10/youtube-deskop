@@ -174,9 +174,9 @@ function createWindow() {
   gatePermissions(win.webContents.session);
   applyContentSecurityPolicy(win.webContents.session);
 
-  // Deny by default; a genuine YouTube pop-out goes to the user's real browser.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (isYouTubeUrl(url)) shell.openExternal(url);
+    if (isYouTubeUrl(url)) return { action: 'allow' };
+    shell.openExternal(url);
     return { action: 'deny' };
   });
 
