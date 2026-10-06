@@ -1,6 +1,6 @@
 {
   "name": "youtube-desktop",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "YouTube desktop app built on Electron with a glassmorphism dark theme.",
   "main": "main.js",
   "author": "Brodie Grant",
@@ -16,7 +16,7 @@
   "scripts": {
     "start": "electron .",
     "build": "node scripts/build.js",
-    "test": "node --test"
+    "release": "npm version patch && git push --follow-tags"
   },
   "keywords": [
     "youtube",
