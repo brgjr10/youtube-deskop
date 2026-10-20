@@ -99,6 +99,11 @@ jobs:
           v=$(node -p "require('./package.json').version")
           echo "version=$v" >> $GITHUB_OUTPUT
 
+      - name: Install FUSE for appimagetool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse2t64 || true
+
       - name: Build Linux AppImage
         env:
           PLATFORM: linux
@@ -122,7 +127,7 @@ jobs:
           cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
           cp .github/workflows/scripts/appimage-tpl/AppRun dist/appimage/AppRun
           chmod +x dist/appimage/AppRun
-          cd dist/appimage && wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool && ./appimagetool --no-appstream . ../youtube-desktop-linux-x86_64.AppImage
+          cd dist/appimage && wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool && ./appimagetool --appimage-extract-and-run . ../youtube-desktop-linux-x86_64.AppImage
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
