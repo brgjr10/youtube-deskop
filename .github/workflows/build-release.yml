@@ -117,7 +117,6 @@ jobs:
       - name: Build Linux AppImage
         run: |
           npm run build
-          # Build Linux AppImage from existing linux-unpacked
           rm -rf dist/appimage && mkdir -p dist/appimage/usr/bin dist/appimage/usr/lib dist/appimage/usr/share/applications dist/appimage/usr/share/icons/hicolor/256x256/apps
           cp dist/youtube-desktop-linux-x64/youtube-desktop dist/appimage/usr/bin/
           cp -r dist/youtube-desktop-linux-x64/resources dist/appimage/usr/lib/
@@ -127,7 +126,6 @@ jobs:
           cp dist/youtube-desktop-linux-x64/*.pak dist/appimage/usr/lib/ 2>/dev/null || true
           cp dist/youtube-desktop-linux-x64/icudtl.dat dist/appimage/usr/lib/ 2>/dev/null || true
           cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
-          cp /tmp/kilo/ytxold/youtube-desktop.desktop dist/appimage/usr/share/applications/
           cat > dist/appimage/AppRun <<'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
