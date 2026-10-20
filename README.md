@@ -2,7 +2,7 @@
 
 A native YouTube player for Windows & Linux built on Electron, wrapped in an **iOS 27 Liquid Glass** interface.
 
-<img width="1280" height="640" alt="image" src="https://github.com/user-attachments/assets/2f03f14f-3c9d-4624-a015-93e6d8edca21" />
+<img width="137" height="156" alt="image" src="https://github.com/user-attachments/assets/446209c0-cef3-4105-8cd4-fcf88c6c2dd6" />
 
 YouTube ships a solid light/dark web player that fights the rest of your desktop. This app loads the real `youtube.com` — every video, playlist, account and login works exactly as it does in a browser — then injects a glassmorphism stylesheet over the top, so the player looks like it belongs next to your other native windows instead of like a web page in a frame.
 
