@@ -16,13 +16,15 @@ No accounts, no API keys, no browser chrome, no ads stripped by extension hacks.
 - **Native window** — 1280x720, frameless chrome-free look with the menu bar auto-hidden and a bundled app icon.
 - **Live theme editing** — `F12` (or `Ctrl+Shift+I` / `Ctrl+Shift+J`) opens DevTools, so the glass can be tuned in place instead of guessed at from screenshots.
 - **Scriptable debugging** — set `YOUTUBE_APP_DEBUG_PORT` to expose the DevTools protocol for an external inspector or an automated styling check. Off by default.
-- **One-command Windows build** — `npm run build` packages a self-contained `.exe` via `@electron/packager`. GitHub Actions builds on every push and publishes a release on `v*` tags.
+- **One-command cross-platform build** — `npm run build` packages a self-contained `.exe` via `@electron/packager` on Windows (`win32`), and sets `PLATFORM=linux` in CI to build a Linux `.AppImage`. GitHub Actions builds both on every push and publishes a release on `v*` tags with both artifacts attached.
 
 ## Requirements
 
 - [Node.js](https://nodejs.org) 20 or newer (Node 20 LTS recommended) — this is the floor
   `@electron/packager` imposes, not a preference.
-- Windows 10/11. The build script is pinned to `win32-x64`; cross-platform packaging is a matter of changing `platform`/`arch` in `scripts/build.js`.
+- Windows 10/11, Linux (any modern distro). `scripts/build.js` defaults to `win32-x64`;
+  set `PLATFORM=linux` to package a Linux `x64` build. Cross-platform packaging is
+  controlled by `platform`/`arch` in `scripts/build.js`.
 
 ## Usage
 
@@ -31,13 +33,19 @@ npm install
 npm start
 ```
 
-To package the app into a distributable Windows executable:
+To package the app:
 
 ```bash
+# Windows build (default)
 npm run build
+# Output: dist/youtube-desktop-win32-x64/youtube-desktop.exe
+
+# Linux build
+PLATFORM=linux npm run build
+# Output: dist/youtube-desktop-linux-x64/ (AppDir ready for AppImage)
 ```
 
-The output lands in `dist/youtube-desktop-win32-x64/youtube-desktop.exe`. The same build runs in CI on every push to `main`; push a `v1.2.3`-style tag to turn the run into a GitHub Release with the executable attached.
+GitHub Actions builds both artifacts on every push to `main`; push a `v1.2.3`-style tag to turn the run into a GitHub Release with both the Windows `.exe` and the Linux `.AppImage` attached.
 
 ## Customising the theme
 
@@ -77,6 +85,20 @@ the hicolor theme:
 cp assets/icons/youtube-desktop-*.png ~/.local/share/icons/hicolor/<size>x<size>/apps/
 ```
 
+## Building a Linux AppImage
+
+The Linux build produces an AppDir in `dist/youtube-desktop-linux-x64/`. To turn it into a self-contained AppImage:
+
+```bash
+PLATFORM=linux npm run build
+cd dist/appimage
+wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+chmod +x appimagetool
+./appimagetool --no-appstream . ../youtube-desktop-linux-x86_64.AppImage
+```
+
+The resulting `youtube-desktop-linux-x86_64.AppImage` runs on any x86_64 Linux with FUSE installed. It bundles its own Electron, Chromium, and the shared libraries it needs, so no system Electron is required.
+
 ## Project structure
 
 ```
@@ -84,7 +106,7 @@ main.js               Electron entry point — window creation, theme injection,
 youtube-glass.css     The Liquid Glass theme, injected into every page load
 youtube.ico           The app icon artwork, and the Windows icon resource
 assets/               Icon assets traced out of youtube.ico for Linux and macOS
-scripts/build.js      @electron/packager build for win32-x64
+scripts/build.js      @electron/packager build, cross-platform (win32 default, linux via PLATFORM=)
 scripts/generate-icons.py  Traces the icon assets out of youtube.ico
 .github/workflows/    Build on push, release on tag
 ```
