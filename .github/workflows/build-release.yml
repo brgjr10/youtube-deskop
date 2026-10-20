@@ -99,42 +99,26 @@ jobs:
           v=$(node -p "require('./package.json').version")
           echo "version=$v" >> $GITHUB_OUTPUT
 
-      - name: Create and push tag
-        id: tag
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag="v${{ steps.version.outputs.version }}"
-          existing=$(git tag -l $tag)
-          if [ -z "$existing" ]; then
-            git config user.email "action@github.com"
-            git config user.name "GitHub Action"
-            git tag $tag
-            git push origin $tag
-          fi
-
       - name: Build Linux AppImage
         run: |
           npm run build
-          rm -rf dist/appimage && mkdir -p dist/appimage/usr/bin dist/appimage/usr/lib dist/appimage/usr/share/applications dist/appimage/usr/share/icons/hicolor/256x256/apps
+          rm -rf dist/appimage && mkdir -p dist/appimage/usr/bin dist/appimage/usr/share/applications dist/appimage/usr/share/icons/hicolor/256x256/apps
           cp dist/youtube-desktop-linux-x64/youtube-desktop dist/appimage/usr/bin/
-          cp -r dist/youtube-desktop-linux-x64/resources dist/appimage/usr/lib/
-          cp dist/youtube-desktop-linux-x64/*.so dist/appimage/usr/lib/ 2>/dev/null || true
-          cp dist/youtube-desktop-linux-x64/swiftshader dist/appimage/usr/lib/ -r 2>/dev/null || true
-          cp dist/youtube-desktop-linux-x64/locales dist/appimage/usr/lib/ -r 2>/dev/null || true
-          cp dist/youtube-desktop-linux-x64/*.pak dist/appimage/usr/lib/ 2>/dev/null || true
-          cp dist/youtube-desktop-linux-x64/icudtl.dat dist/appimage/usr/lib/ 2>/dev/null || true
+          cp -r dist/youtube-desktop-linux-x64/resources dist/appimage/usr/bin/
+          cp dist/youtube-desktop-linux-x64/*.pak dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/icudtl.dat dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/libffmpeg.so dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/libvulkan.so.1 dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/libvk_swiftshader.so dist/appimage/usr/bin/ 2>/dev/null || true
+          cp -r dist/youtube-desktop-linux-x64/locales dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/swiftshader dist/appimage/usr/bin/ -r 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/snapshot_blob.bin dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/v8_context_snapshot.bin dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/version dist/appimage/usr/bin/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/vk_swiftshader_icd.json dist/appimage/usr/bin/ 2>/dev/null || true
+          cp /tmp/kilo/ytxold/youtube-desktop.desktop dist/appimage/usr/share/applications/
           cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
-          cat > dist/appimage/AppRun <<'EOF'
-#!/bin/bash
-HERE="$(dirname "$(readlink -f "${0}")")"
-export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-export PATH="${HERE}/usr/bin:${PATH}"
-export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS}"
-cd "${HERE}/usr/bin"
-exec ./youtube-desktop "$@"
-EOF
+          cp /home/brgjr10/projects/youtube-app/.github/workflows/scripts/appimage-tpl/AppRun dist/appimage/AppRun
           chmod +x dist/appimage/AppRun
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool
           cd dist/appimage && ./appimagetool --no-appstream . ../youtube-desktop-linux-x86_64.AppImage
