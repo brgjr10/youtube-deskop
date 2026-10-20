@@ -124,7 +124,10 @@ jobs:
           cp dist/youtube-desktop-linux-x64/version dist/appimage/usr/bin/ 2>/dev/null || true
           cp dist/youtube-desktop-linux-x64/vk_swiftshader_icd.json dist/appimage/usr/bin/ 2>/dev/null || true
           cp .github/workflows/scripts/appimage-tpl/youtube-desktop.desktop dist/appimage/usr/share/applications/
+          cp .github/workflows/scripts/appimage-tpl/youtube-desktop.desktop dist/appimage/youtube-desktop.desktop
+          sed -i "s/X-AppImage-Version=.*/X-AppImage-Version=${{ steps.version.outputs.version }}/" dist/appimage/youtube-desktop.desktop dist/appimage/usr/share/applications/youtube-desktop.desktop
           cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
+          cp assets/icons/youtube-desktop-256.png dist/appimage/youtube-desktop.png
           cp .github/workflows/scripts/appimage-tpl/AppRun dist/appimage/AppRun
           chmod +x dist/appimage/AppRun
           cd dist/appimage && wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool && ./appimagetool --appimage-extract-and-run . ../youtube-desktop-linux-x86_64.AppImage
