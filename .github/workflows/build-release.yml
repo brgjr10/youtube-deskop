@@ -100,6 +100,8 @@ jobs:
           echo "version=$v" >> $GITHUB_OUTPUT
 
       - name: Build Linux AppImage
+        env:
+          PLATFORM: linux
         run: |
           npm run build
           rm -rf dist/appimage && mkdir -p dist/appimage/usr/bin dist/appimage/usr/share/applications dist/appimage/usr/share/icons/hicolor/256x256/apps
@@ -116,9 +118,9 @@ jobs:
           cp dist/youtube-desktop-linux-x64/v8_context_snapshot.bin dist/appimage/usr/bin/ 2>/dev/null || true
           cp dist/youtube-desktop-linux-x64/version dist/appimage/usr/bin/ 2>/dev/null || true
           cp dist/youtube-desktop-linux-x64/vk_swiftshader_icd.json dist/appimage/usr/bin/ 2>/dev/null || true
-          cp /tmp/kilo/ytxold/youtube-desktop.desktop dist/appimage/usr/share/applications/
+          cp .github/workflows/scripts/appimage-tpl/youtube-desktop.desktop dist/appimage/usr/share/applications/
           cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
-          cp /home/brgjr10/projects/youtube-app/.github/workflows/scripts/appimage-tpl/AppRun dist/appimage/AppRun
+          cp .github/workflows/scripts/appimage-tpl/AppRun dist/appimage/AppRun
           chmod +x dist/appimage/AppRun
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool
           cd dist/appimage && ./appimagetool --no-appstream . ../youtube-desktop-linux-x86_64.AppImage

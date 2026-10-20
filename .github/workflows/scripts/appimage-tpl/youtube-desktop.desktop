@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=youtube-desktop
+Exec=AppRun --no-sandbox %U
+Terminal=false
+Type=Application
+Icon=youtube-desktop
+StartupWMClass=youtube-desktop
+X-AppImage-Version=1.0.6
+Comment=YouTube desktop app built on Electron with a glassmorphism dark theme.
+Categories=Utility;

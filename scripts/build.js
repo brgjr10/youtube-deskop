@@ -3,13 +3,15 @@ const path = require('path');
 const appDir = path.join(__dirname, '..');
 const pkg = require(path.join(appDir, 'package.json'));
 
+const requestedPlatform = process.env.PLATFORM || 'win32';
+
 const opts = {
   name: 'youtube-desktop',
   dir: appDir,
-  platform: 'win32',
+  platform: requestedPlatform,
   arch: 'x64',
   out: path.join(appDir, 'dist'),
-  icon: path.join(appDir, 'youtube.ico'),
+  icon: path.join(appDir, requestedPlatform === 'win32' ? 'youtube.ico' : 'assets/youtube-desktop.png'),
   executableName: 'youtube-desktop',
   prune: true,
   // Ship the app sources as one archive instead of loose files. Electron patches
