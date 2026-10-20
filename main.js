@@ -153,7 +153,12 @@ const applyContentSecurityPolicy = (session) => {
   });
 };
 
-const iconPath = path.join(__dirname, 'youtube.ico');
+// Chromium reads Windows icon resources on Windows and nothing else. Handing
+// it an .ico on Linux or macOS leaves the window with the generic Electron
+// glyph, so those platforms get the PNG that was traced out of the same mark.
+const iconPath = process.platform === 'win32'
+  ? path.join(__dirname, 'youtube.ico')
+  : path.join(__dirname, 'assets', 'youtube-desktop.png');
 
 function createWindow() {
   const win = new BrowserWindow({

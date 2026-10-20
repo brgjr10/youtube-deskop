@@ -49,12 +49,43 @@ The output lands in `dist/youtube-desktop-win32-x64/youtube-desktop.exe`. The sa
 
 The file is generated from a Stylus userstyle (`youtube.theme`); the `@-moz-document` wrapper and UserStyle metadata are stripped because Electron loads the stylesheet directly. Edit the source `.theme` and regenerate, or tweak the generated copy directly — the app reads it either way.
 
+## The app icon
+
+`youtube.ico` is the canonical artwork — the mark that ships with the Windows
+executable. Chromium only reads Windows icon resources on Windows, so the same
+mark is traced out of the `.ico` into the PNG and SVG assets the Linux and
+macOS builds need:
+
+```
+assets/youtube-desktop.svg        scalable master, traced from the .ico
+assets/youtube-desktop.png        256x256 raster, used as the window icon
+assets/icons/<size>x<size>.png    hicolor theme set, 16 through 256
+```
+
+Regenerate them after changing `youtube.ico`:
+
+```bash
+python3 scripts/generate-icons.py
+```
+
+The script traces the mark, checks each traced shape against the pixels it came
+from, and fails rather than writing a half-drawn icon. The PNGs are the source
+of truth for the desktop entry, which points at the `youtube-desktop` icon in
+the hicolor theme:
+
+```bash
+cp assets/icons/youtube-desktop-*.png ~/.local/share/icons/hicolor/<size>x<size>/apps/
+```
+
 ## Project structure
 
 ```
 main.js               Electron entry point — window creation, theme injection, DevTools
 youtube-glass.css     The Liquid Glass theme, injected into every page load
+youtube.ico           The app icon artwork, and the Windows icon resource
+assets/               Icon assets traced out of youtube.ico for Linux and macOS
 scripts/build.js      @electron/packager build for win32-x64
+scripts/generate-icons.py  Traces the icon assets out of youtube.ico
 .github/workflows/    Build on push, release on tag
 ```
 
