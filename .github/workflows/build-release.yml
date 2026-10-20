@@ -10,8 +10,10 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +34,7 @@ jobs:
         shell: pwsh
         run: |
           $v = (Get-Content package.json | ConvertFrom-Json).version
-          "version=$v" >> $env:GITHUB_OUTPUT
+          echo "version=$v" >> $env:GITHUB_OUTPUT
 
       - name: Create and push tag
         id: tag
@@ -64,14 +66,114 @@ jobs:
           $exe = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'dist') -Filter 'youtube-desktop.exe' -Recurse | Select-Object -First 1
           if (-not $exe) { throw 'youtube-desktop.exe not found after build' }
           "path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
-          "name=$($exe.Name)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-desktop-win.exe
+          path: ${{ steps.artifact.outputs.path }}
+
+  linux:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read version from package.json
+        id: version
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        id: tag
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          existing=$(git tag -l $tag)
+          if [ -z "$existing" ]; then
+            git config user.email "action@github.com"
+            git config user.name "GitHub Action"
+            git tag $tag
+            git push origin $tag
+          fi
+
+      - name: Build Linux AppImage
+        run: |
+          npm run build
+          # Build Linux AppImage from existing linux-unpacked
+          rm -rf dist/appimage && mkdir -p dist/appimage/usr/bin dist/appimage/usr/lib dist/appimage/usr/share/applications dist/appimage/usr/share/icons/hicolor/256x256/apps
+          cp dist/youtube-desktop-linux-x64/youtube-desktop dist/appimage/usr/bin/
+          cp -r dist/youtube-desktop-linux-x64/resources dist/appimage/usr/lib/
+          cp dist/youtube-desktop-linux-x64/*.so dist/appimage/usr/lib/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/swiftshader dist/appimage/usr/lib/ -r 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/locales dist/appimage/usr/lib/ -r 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/*.pak dist/appimage/usr/lib/ 2>/dev/null || true
+          cp dist/youtube-desktop-linux-x64/icudtl.dat dist/appimage/usr/lib/ 2>/dev/null || true
+          cp assets/icons/youtube-desktop-256.png dist/appimage/usr/share/icons/hicolor/256x256/apps/youtube-desktop.png
+          cp /tmp/kilo/ytxold/youtube-desktop.desktop dist/appimage/usr/share/applications/
+          cat > dist/appimage/AppRun <<'EOF'
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+export PATH="${HERE}/usr/bin:${PATH}"
+export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS}"
+cd "${HERE}/usr/bin"
+exec ./youtube-desktop "$@"
+EOF
+          chmod +x dist/appimage/AppRun
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool && chmod +x appimagetool
+          cd dist/appimage && ./appimagetool --no-appstream . ../youtube-desktop-linux-x86_64.AppImage
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-desktop-linux-x86_64.AppImage
+          path: dist/youtube-desktop-linux-x86_64.AppImage
+
+  release:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: youtube-desktop-win.exe
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: youtube-desktop-linux-x86_64.AppImage
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Release v${{ steps.version.outputs.version }}
-          files: ${{ steps.artifact.outputs.path }}
+          tag_name: v${{ needs.windows.outputs.version }}
+          name: Release v${{ needs.windows.outputs.version }}
+          files: |
+            ${{ github.workspace }}/youtube-desktop-win.exe
+            ${{ github.workspace }}/youtube-desktop-linux-x86_64.AppImage
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
