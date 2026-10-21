@@ -164,7 +164,7 @@ jobs:
           tag_name: v${{ needs.windows.outputs.version }}
           name: Release v${{ needs.windows.outputs.version }}
           files: |
-            ${{ github.workspace }}/youtube-desktop-win.exe
+            ${{ github.workspace }}/youtube-desktop.exe
             ${{ github.workspace }}/youtube-desktop-linux-x86_64.AppImage
           generate_release_notes: true
         env:

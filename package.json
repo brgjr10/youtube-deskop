@@ -1,6 +1,6 @@
 {
   "name": "youtube-desktop",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "YouTube desktop app built on Electron with a glassmorphism dark theme.",
   "main": "main.js",
   "author": "Brodie Grant",
