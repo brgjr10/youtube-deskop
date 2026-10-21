@@ -22,6 +22,47 @@ const isYouTubeUrl = (url) => {
   }
 };
 
+// Signing in to YouTube means signing in to Google: the "Sign in" link points
+// at accounts.google.com, Google answers there and hands the browser back to
+// youtube.com/signin. A window that refuses Google's pages, or sends them to
+// the system browser, can never hold an account - so Google's identity pages
+// are the one thing outside YouTube that stays inside the app. https only, and
+// only on a Google-owned host.
+const GOOGLE_AUTH_HOSTS = new Set([
+  'accounts.google.com',
+  'accounts.youtube.com',
+  'consent.google.com',
+  'consent.youtube.com',
+  'myaccount.google.com'
+]);
+
+// Google still serves some regional Accounts pages from a country domain, so
+// accounts.google.co.uk has to be recognised as well. The country list is
+// spelled out instead of being pattern-matched: a look-alike host such as
+// accounts.google.evil.test is not a Google page and must not pass.
+const REGIONAL_ACCOUNTS_HOSTS = new Set([
+  'accounts.google.at', 'accounts.google.be', 'accounts.google.ca',
+  'accounts.google.ch', 'accounts.google.co.in', 'accounts.google.co.jp',
+  'accounts.google.co.nz', 'accounts.google.co.uk', 'accounts.google.co.za',
+  'accounts.google.com.au', 'accounts.google.com.br', 'accounts.google.com.mx',
+  'accounts.google.cz', 'accounts.google.de', 'accounts.google.dk',
+  'accounts.google.es', 'accounts.google.fi', 'accounts.google.fr',
+  'accounts.google.hu', 'accounts.google.ie', 'accounts.google.it',
+  'accounts.google.nl', 'accounts.google.no', 'accounts.google.pl',
+  'accounts.google.pt', 'accounts.google.ro', 'accounts.google.ru',
+  'accounts.google.se', 'accounts.google.sg', 'accounts.google.tr'
+]);
+
+const isGoogleAuthUrl = (url) => {
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== 'https:') return false;
+    return GOOGLE_AUTH_HOSTS.has(hostname) || REGIONAL_ACCOUNTS_HOSTS.has(hostname);
+  } catch {
+    return false;
+  }
+};
+
 // DevTools stay reachable so the theme can be inspected and tuned in place
 // instead of guessing from a screenshot - in development only. The packaged
 // app ships without the preference and without the shortcut.
@@ -181,17 +222,61 @@ function createWindow() {
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isYouTubeUrl(url)) return { action: 'allow' };
-    shell.openExternal(url);
+    // A Google sign-in has to happen in this app. Handed to the system browser
+    // it signs the browser in and leaves the app exactly as signed out as it
+    // was, and the user is left with a "Sign in" button that does nothing.
+    if (isGoogleAuthUrl(url)) return { action: 'allow' };
+    // Everything else belongs in the user's own browser - but only if it is a
+    // web address. A javascript: URL is not something the shell can open.
+    if (url.startsWith('https://') || url.startsWith('http://')) shell.openExternal(url);
     return { action: 'deny' };
   });
 
   win.webContents.on('will-navigate', (event, url) => {
     if (isYouTubeUrl(url)) return;
+    // Google's identity pages are part of the sign-in handshake, so the
+    // "Sign in" link has to be able to follow them.
+    if (isGoogleAuthUrl(url)) return;
     console.warn(`Blocked navigation away from YouTube: ${url}`);
     event.preventDefault();
   });
 
-  win.webContents.on('did-finish-load', () => applyTheme(win.webContents));
+  // A Google sign-in popup is a real child window, because that is the window
+  // YouTube expects the answer to come back through. It is kept apart from the
+  // glass one: no theme, its own title, and no window of its own.
+  win.webContents.on('did-create-window', (_event, authWindow, details) => {
+    if (!isGoogleAuthUrl(details?.url ?? '')) return;
+
+    let signedIn = false;
+
+    authWindow.setTitle('Sign in to YouTube');
+    authWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    authWindow.webContents.on('will-navigate', (navEvent, url) => {
+      if (isYouTubeUrl(url) || isGoogleAuthUrl(url)) return;
+      console.warn(`Blocked navigation in the sign-in window: ${url}`);
+      navEvent.preventDefault();
+    });
+    authWindow.webContents.on('did-navigate', (_navEvent, url) => {
+      // Google sends the browser back to YouTube once the account is linked.
+      if (!isYouTubeUrl(url)) return;
+      signedIn = true;
+      authWindow.close();
+    });
+    authWindow.on('closed', () => {
+      // The account cookie now lives in the shared session, so the YouTube
+      // page has to be reloaded for the signed-in state to show up.
+      if (!signedIn || win.isDestroyed()) return;
+      win.webContents.reload();
+    });
+  });
+
+  // The glass theme is YouTube's own styling. Google's sign-in pages are not
+  // YouTube, and a dark glass skin over a Google form makes the form hard to
+  // read, so the theme is only ever applied to a YouTube document.
+  win.webContents.on('did-finish-load', () => {
+    if (!isYouTubeUrl(win.webContents.getURL())) return;
+    applyTheme(win.webContents);
+  });
 
   win.loadURL('https://youtube.com').catch((error) => {
     console.error(`Could not load YouTube: ${error.message}`);

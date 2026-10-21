@@ -56,8 +56,6 @@ jobs:
 
       - name: Build Windows executable
         run: npm run build
-        env:
-          GITHUB_SHA: ${{ github.sha }}
 
       - name: Locate built artifact
         id: artifact

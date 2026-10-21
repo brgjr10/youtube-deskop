@@ -27,39 +27,42 @@ const logged = (fragment) => consoleLines.some((line) => line.includes(fragment)
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 // YTDESKOP-003
-test('setWindowOpenHandler is registered and denies every pop-out', async () => {
+test('setWindowOpenHandler keeps YouTube pop-outs in the app and sends other links out', async () => {
   const session = createFakeElectron();
   const { state, window } = await loadMain(session);
 
   assert.ok(state.windowOpenHandler, 'no setWindowOpenHandler registered');
 
-  // A remote origin must not be able to spawn a second native window.
+  // A YouTube pop-out opens in the app, as its own window.
+  assert.deepStrictEqual(
+    state.windowOpenHandler({ url: 'https://www.youtube.com/watch?v=abc' }),
+    { action: 'allow' }
+  );
+  assert.equal(state.externalUrls.length, 0, 'a YouTube pop-out was handed to openExternal');
+  assert.equal(state.windows.length, 1, 'a YouTube pop-out opened a window');
+
+  // Anything that is not YouTube belongs in the user's own browser, and a
+  // remote origin must not be able to spawn a second native window.
   assert.deepStrictEqual(
     state.windowOpenHandler({ url: 'https://example.com/' }),
     { action: 'deny' }
   );
+  assert.deepStrictEqual(state.externalUrls, ['https://example.com/']);
   assert.equal(state.windows.length, 1, 'a second BrowserWindow was created');
-
-  // Genuine YouTube pop-outs go to the OS browser, still never to a new window.
-  assert.deepStrictEqual(
-    state.windowOpenHandler({ url: 'https://www.youtube.com/watch?v=abc' }),
-    { action: 'deny' }
-  );
-  assert.deepStrictEqual(state.externalUrls, ['https://www.youtube.com/watch?v=abc']);
-  assert.equal(state.windows.length, 1, 'a YouTube pop-out still opened a window');
 
   // A look-alike host must not be treated as YouTube.
   assert.deepStrictEqual(
     state.windowOpenHandler({ url: 'https://www.youtube.com.evil.test/' }),
     { action: 'deny' }
   );
-  assert.equal(state.externalUrls.length, 1, 'a look-alike host was handed to openExternal');
+  assert.equal(state.externalUrls.length, 2, 'a look-alike host was treated as YouTube');
 
+  // The shell is not handed something it cannot open.
   assert.deepStrictEqual(
     state.windowOpenHandler({ url: 'javascript:alert(1)' }),
     { action: 'deny' }
   );
-  assert.equal(state.externalUrls.length, 1, 'a javascript: URL was handed to openExternal');
+  assert.equal(state.externalUrls.length, 2, 'a javascript: URL was handed to openExternal');
 });
 
 // YTDESKOP-004
@@ -104,8 +107,16 @@ test('will-navigate refuses to leave YouTube and CSP is injected', async () => {
   attempt('https://www.youtube.com/watch?v=abc');
   assert.strictEqual(prevented, 0, 'a YouTube navigation was blocked');
 
+  // Google's identity pages are the sign-in handshake. A window that refuses
+  // them leaves the user with a "Sign in" button that does nothing at all.
   attempt('https://accounts.google.com/ServiceLogin');
-  assert.strictEqual(prevented, 1, 'an off-YouTube navigation was allowed');
+  assert.strictEqual(prevented, 0, 'a Google sign-in navigation was blocked');
+
+  attempt('https://accounts.google.co.uk/ServiceLogin');
+  assert.strictEqual(prevented, 0, 'a regional Google sign-in navigation was blocked');
+
+  attempt('https://accounts.google.com.evil.test/ServiceLogin');
+  assert.strictEqual(prevented, 1, 'a look-alike Google host was allowed');
 
   attempt('https://evil.test/');
   assert.strictEqual(prevented, 2, 'an off-YouTube navigation was allowed');
@@ -308,6 +319,78 @@ test('renderer isolation is intact', async () => {
   assert.doesNotMatch(source, /contextIsolation:\s*false/, 'main.js disables contextIsolation somewhere');
 });
 
+// YTDESKOP-028
+test('a Google sign-in opens in the app instead of being dropped', async () => {
+  const session = createFakeElectron();
+  const { state, window, electron } = await loadMain(session);
+
+  // The "Sign in" link on youtube.com points at Google's accounts page. It has
+  // to open in the app: a sign-in that happens in the system browser leaves the
+  // app itself signed out.
+  assert.deepStrictEqual(
+    state.windowOpenHandler({ url: 'https://accounts.google.com/ServiceLogin?service=youtube' }),
+    { action: 'allow' }
+  );
+
+  // A look-alike host is still refused.
+  assert.deepStrictEqual(
+    state.windowOpenHandler({ url: 'https://accounts.google.com.evil.test/ServiceLogin' }),
+    { action: 'deny' }
+  );
+
+  // The popup stays a popup: YouTube hands the result back to the window that
+  // opened it.
+  const authWindow = new electron.BrowserWindow({});
+  window.webContents.emit('did-create-window', {}, authWindow, {
+    url: 'https://accounts.google.com/ServiceLogin?service=youtube'
+  });
+
+  assert.equal(authWindow.title, 'Sign in to YouTube', 'the sign-in window was not labelled');
+  assert.equal(authWindow.webContents.insertedCss.length, 0, 'the glass theme leaked into the sign-in window');
+
+  // The sign-in window cannot spawn a window of its own.
+  assert.deepStrictEqual(
+    authWindow.webContents.windowOpenHandler({ url: 'https://example.com/' }),
+    { action: 'deny' }
+  );
+
+  // It follows the sign-in handshake and nothing else.
+  const guard = authWindow.webContents.handlers('will-navigate')[0];
+  let prevented = 0;
+  const attempt = (url) => guard({ preventDefault: () => { prevented += 1; } }, url);
+
+  attempt('https://accounts.google.com/signin/v2/identifier');
+  attempt('https://consent.youtube.com/m');
+  assert.strictEqual(prevented, 0, 'the sign-in handshake was blocked');
+
+  attempt('https://evil.test/');
+  assert.strictEqual(prevented, 1, 'an off-Google navigation was allowed in the sign-in window');
+
+  // Google hands the browser back to YouTube; the window closes and the main
+  // window reloads so the signed-in account shows up.
+  authWindow.webContents.emit('did-navigate', {}, 'https://www.youtube.com/signin?action_handle_signin=true');
+  assert.equal(authWindow.destroyed, true, 'the sign-in window stayed open after the account was linked');
+  assert.equal(state.reloads.length, 1, 'the YouTube page was not reloaded after the sign-in');
+});
+
+// YTDESKOP-029
+test('the glass theme is only ever applied to a YouTube document', async () => {
+  const session = createFakeElectron();
+  const { window } = await loadMain(session);
+
+  // A Google sign-in page under the glass theme is a dark skin over a light
+  // Google form, which is a form nobody can fill in.
+  window.webContents.currentUrl = 'https://accounts.google.com/ServiceLogin';
+  window.webContents.emit('did-finish-load');
+  await settle();
+  assert.equal(window.webContents.insertedCss.length, 0, 'the glass theme was injected into a Google page');
+
+  window.webContents.currentUrl = 'https://www.youtube.com/';
+  window.webContents.emit('did-finish-load');
+  await settle();
+  assert.equal(window.webContents.insertedCss.length, 1, 'the glass theme was not applied to YouTube');
+});
+
 // YTDESKOP-017 / -018 / -019 / -027 and the build gate
 test('the build script carries no buildVersion and ignores packager leftovers', () => {
   const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build.js'), 'utf8');
@@ -376,6 +459,8 @@ test('the build exits non-zero with a diagnostic when packaging stalls', () => {
     finished.output.indexOf('}', finished.output.indexOf('"ignore"')) + 1
   ));
   assert.ok(!('buildVersion' in options), `buildVersion is still an option: ${JSON.stringify(options)}`);
-  assert.strictEqual(options.appVersion, require(path.join(repoRoot, 'package.json')).version);
+  // The version comes from the package.json of the directory being packed -
+  // in the fixture that is the fixture, not the repository.
+  assert.strictEqual(options.appVersion, '1.0.0');
   assert.strictEqual(options.asar, true);
 });

@@ -39,10 +39,13 @@ const createFakeElectron = (overrides = {}) => {
     errorBoxes: [],
     quitCalls: 0,
     windowOpenHandler: null,
+    windowOpenHandlers: [],
     webContentsEvents: new Map(),
     devToolsToggles: 0,
     restoreCalls: 0,
     focusCalls: 0,
+    reloads: [],
+    titles: [],
     session: createSession(),
     isPackaged: false,
     singleInstanceLock: true,
@@ -50,24 +53,28 @@ const createFakeElectron = (overrides = {}) => {
   };
 
   class FakeWebContents {
-    constructor() {
+    constructor(owner) {
+      this.owner = owner;
       this.session = state.session;
       this.loadedUrls = [];
       this.loadUrlError = state.loadUrlError ?? null;
       this.insertedCss = [];
       this.devToolsAllowed = true;
+      this.currentUrl = '';
+      this.windowOpenHandler = null;
+      this.events = new Map();
       // A fake <html> so the theme dedup marker behaves like the real document.
       this.documentAttributes = new Set();
     }
 
     on(event, handler) {
-      const handlers = state.webContentsEvents.get(event) ?? [];
+      const handlers = this.events.get(event) ?? [];
       handlers.push(handler);
-      state.webContentsEvents.set(event, handlers);
+      this.events.set(event, handlers);
     }
 
     handlers(event) {
-      return state.webContentsEvents.get(event) ?? [];
+      return this.events.get(event) ?? [];
     }
 
     emit(event, ...args) {
@@ -75,7 +82,10 @@ const createFakeElectron = (overrides = {}) => {
     }
 
     setWindowOpenHandler(handler) {
-      state.windowOpenHandler = handler;
+      this.windowOpenHandler = handler;
+      state.windowOpenHandlers.push(handler);
+      // The main window's handler is the one the suite asserts on directly.
+      if (this.owner?.isMain) state.windowOpenHandler = handler;
     }
 
     executeJavaScript(source) {
@@ -98,7 +108,16 @@ const createFakeElectron = (overrides = {}) => {
 
     loadURL(url) {
       this.loadedUrls.push(url);
+      this.currentUrl = url;
       return this.loadUrlError ? Promise.reject(this.loadUrlError) : Promise.resolve();
+    }
+
+    getURL() {
+      return this.currentUrl;
+    }
+
+    reload() {
+      state.reloads.push(this);
     }
 
     toggleDevTools() {
@@ -109,8 +128,12 @@ const createFakeElectron = (overrides = {}) => {
   class FakeBrowserWindow {
     constructor(options) {
       this.options = options;
-      this.webContents = new FakeWebContents();
+      this.isMain = state.windows.length === 0;
+      this.webContents = new FakeWebContents(this);
       this.minimized = false;
+      this.destroyed = false;
+      this.title = options?.title ?? '';
+      this.events = new Map();
       state.windows.push(this);
     }
 
@@ -133,6 +156,30 @@ const createFakeElectron = (overrides = {}) => {
 
     focus() {
       state.focusCalls += 1;
+    }
+
+    setTitle(title) {
+      this.title = title;
+      state.titles.push(title);
+    }
+
+    isDestroyed() {
+      return this.destroyed;
+    }
+
+    on(event, handler) {
+      const handlers = this.events.get(event) ?? [];
+      handlers.push(handler);
+      this.events.set(event, handlers);
+    }
+
+    emit(event, ...args) {
+      for (const handler of this.events.get(event) ?? []) handler(...args);
+    }
+
+    close() {
+      this.destroyed = true;
+      this.emit('closed');
     }
   }
 
@@ -214,7 +261,7 @@ const loadMain = async ({ electron, state }, { env = {} } = {}) => {
     Object.assign(process.env, previousEnv);
   }
 
-  return { state, window: state.windows[0] };
+  return { state, window: state.windows[0], electron };
 };
 
 module.exports = { createFakeElectron, loadMain, THEME_MARKER };
