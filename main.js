@@ -7,6 +7,7 @@ const { app, BrowserWindow, dialog, nativeTheme, shell, ipcMain, globalShortcut 
 // loaded at the time, so it has to be re-applied every time YouTube swaps the
 // document out (its own SPA routing keeps the CSS alive in between).
 const themePath = path.join(__dirname, 'youtube-glass.css');
+const preloadPath = path.join(__dirname, 'preload.js');
 
 // This window is YouTube in a frame, not a browser. Anything the page tries to
 // open or navigate to outside the YouTube origins is refused, so no origin can
@@ -184,7 +185,9 @@ const themeDocument = async (contents) => {
 
       // Click handler for the PiP button
       document.getElementById('ytdeskop-pip-button').addEventListener('click', () => {
-        window.electronAPI.send('pip-toggle');
+        if (window.ytdAPI && window.ytdAPI.togglePip) {
+          window.ytdAPI.togglePip();
+        }
       });
     })()
   `).catch((error) => {
@@ -433,6 +436,12 @@ if (ipcMain) {
         break;
     }
   });
+
+  ipcMain.on('pip-toggle', (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      togglePip(mainWindow);
+    }
+  });
 }
 
 function createWindow() {
@@ -445,7 +454,8 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      devTools: isDev
+      devTools: isDev,
+      preload: preloadPath
     }
   });
 
