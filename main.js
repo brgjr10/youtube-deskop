@@ -230,15 +230,34 @@ const getVideoInfo = async (win) => {
   try {
     const info = await contents.executeJavaScript(`
       (() => {
-        const video = document.querySelector('video');
+        // Try multiple ways to find the video element
+        let video = document.querySelector('video');
+        
+        // YouTube may have video in shadow DOM or other containers
+        if (!video) {
+          // Walk up the tree to find any video element
+          let node = document.body;
+          while (node) {
+            const found = node.querySelector('video');
+            if (found) { video = found; break; }
+            node = node.parentNode;
+          }
+        }
+        
         if (!video) return null;
         
         let videoId = null;
         const url = window.location.href;
         
         // Try to get video ID from URL
-        const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\\.be\\/([^?&]+)/) || url.match(/\\/embed\\/([^?&]+)/);
+        const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/) || url.match(/\/embed\/([^?&]+)/);
         if (match) videoId = match[1];
+        
+        // Also try to get from video data attributes
+        if (!videoId) {
+          const match = video.getAttribute('data-video-id') || video.getAttribute('data-yt-id');
+          if (match) videoId = match;
+        }
         
         return {
           videoId,
@@ -308,16 +327,16 @@ const togglePip = async (win) => {
 
   const info = await getVideoInfo(win);
   if (!info || !info.videoId) {
-    console.warn('Could not get video info for PiP');
+    dialog.showErrorBox('YouTube Desktop', 'Could not find a video to picture-in-picture.\n\nMake sure a video is playing or paused.');
     return;
   }
 
-  createPipWindow(info.videoId, Math.floor(info.currentTime));
-  
+  const pipWin = createPipWindow(info.videoId, Math.floor(info.currentTime));
+
   // If video was paused, pause the PiP window too
-  if (info.paused && pipWindow) {
-    pipWindow.webContents.once('did-finish-load', () => {
-      pipWindow.webContents.send('pip-command', { type: 'pause' });
+  if (info.paused && pipWin) {
+    pipWin.webContents.once('did-finish-load', () => {
+      pipWin.webContents.send('pip-command', { type: 'pause' });
     });
   }
 };
@@ -462,9 +481,12 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     // Register global shortcut for PiP (Ctrl+Shift+P)
     if (globalShortcut) {
-      globalShortcut.register('Control+Shift+P', () => {
+      const registered = globalShortcut.register('Control+Shift+P', () => {
         if (mainWindow) togglePip(mainWindow);
       });
+      if (!registered) {
+        console.warn('Failed to register Ctrl+Shift+P global shortcut (may conflict with other apps)');
+      }
     }
   }).catch((error) => {
     console.error(`Startup failed: ${error.message}`);
