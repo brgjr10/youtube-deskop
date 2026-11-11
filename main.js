@@ -117,6 +117,42 @@ const watchTheme = () => {
 // apart from a new document.
 const THEME_MARKER = 'data-ytdeskop-themed';
 
+// Button injected into YouTube's DOM to trigger PiP (fallback if global shortcut
+// is intercepted by the window manager on Linux).
+const PIP_BUTTON_CSS = `
+  #ytdeskop-pip-button {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 2147483647;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  #ytdeskop-pip-button svg { width: 20px; height: 20px; fill: currentColor; }
+  #ytdeskop-pip-button:hover { background: #1557b0; transform: translateY(-1px); }
+`;
+
+const PIP_BUTTON_HTML = `
+  <button id="ytdeskop-pip-button" title="Picture in Picture (Ctrl+Shift+P)">
+    <svg viewBox="0 0 24 24"><path d="M3 5h6v2H3V5zm0 14h6v2H3v-2zm17.33-9.33L5 12v4c0 5.55 4.45 10 10 10s10-4.45 10-10v-4c-2.76-2.76-7.24-2.77-10-2.77zM3 12c0-1.1.9-2 2-2h7v12H3C1.9 24 1 23.1 1 22v-4c0-.9.9-2 2-2z"/></svg>
+    PiP
+  </button>
+`;
+
 // Serialised so two loads landing back to back cannot both read the document as
 // unthemed before either has written the marker.
 let themeQueue = Promise.resolve();
@@ -133,6 +169,28 @@ const themeDocument = async (contents) => {
   contents.insertCSS(theme).catch((error) => {
     console.error(`Glass theme injection failed: ${error.message}`);
   });
+
+  // Inject a PiP button so users can toggle picture-in-picture even when the
+  // global shortcut is intercepted by the window manager on Linux.
+  contents.executeJavaScript(`
+    (() => {
+      if (document.getElementById('ytdeskop-pip-button')) return;
+      const style = document.createElement('style');
+      style.textContent = ${JSON.stringify(PIP_BUTTON_CSS)};
+      document.documentElement.appendChild(style);
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = ${JSON.stringify(PIP_BUTTON_HTML)};
+      document.body.appendChild(wrapper.firstElementChild);
+
+      // Click handler for the PiP button
+      document.getElementById('ytdeskop-pip-button').addEventListener('click', () => {
+        window.electronAPI.send('pip-toggle');
+      });
+    })()
+  `).catch((error) => {
+    console.error(`PiP button injection failed: ${error.message}`);
+  });
+
   contents.executeJavaScript(
     `document.documentElement.setAttribute(${JSON.stringify(THEME_MARKER)}, '')`
   ).catch((error) => {
@@ -297,13 +355,13 @@ const createPipWindow = (videoId, seekTime = 0) => {
     },
   });
 
-  pipWin.loadFile(path.join(__dirname, 'pip.html'), {
-    query: { videoId, seekTime }
-  }).catch((error) => {
+pipWin.loadFile(path.join(__dirname, 'pip.html'), {
+    search: `?videoId=${encodeURIComponent(videoId)}&seekTime=${Math.floor(seekTime)}`
+}).catch((error) => {
     console.error('Failed to load PiP window:', error);
     pipWin.destroy();
     pipWindow = null;
-  });
+});
 
   pipWin.on('closed', () => {
     pipWindow = null;
