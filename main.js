@@ -1,6 +1,7 @@
 ﻿const fs = require('fs');
 const path = require('path');
-const { app, BrowserWindow, dialog, nativeTheme, shell } = require('electron');
+const { app, BrowserWindow, dialog, nativeTheme, shell, ipcMain, globalShortcut } = require('electron');
+
 // The glass theme lives beside this file so it can be edited without touching
 // the launcher. Electron's insertCSS only applies to the document that is
 // loaded at the time, so it has to be re-applied every time YouTube swaps the
@@ -201,6 +202,152 @@ const iconPath = process.platform === 'win32'
   ? path.join(__dirname, 'youtube.ico')
   : path.join(__dirname, 'assets', 'youtube-desktop.png');
 
+// --- Picture-in-Picture (PiP) support ---
+
+// Global PiP window state
+let pipWindow = null;
+let mainWindow = null;
+
+// Extract YouTube video ID from a URL
+const extractVideoId = (url) => {
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1);
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname === '/watch') return u.searchParams.get('v');
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
+      if (u.pathname.startsWith('/v/')) return u.pathname.split('/')[2];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
+// Get current video info from the main YouTube page
+const getVideoInfo = async (win) => {
+  const contents = win.webContents;
+  try {
+    const info = await contents.executeJavaScript(`
+      (() => {
+        const video = document.querySelector('video');
+        if (!video) return null;
+        
+        let videoId = null;
+        const url = window.location.href;
+        
+        // Try to get video ID from URL
+        const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\\.be\\/([^?&]+)/) || url.match(/\\/embed\\/([^?&]+)/);
+        if (match) videoId = match[1];
+        
+        return {
+          videoId,
+          currentTime: video.currentTime,
+          paused: video.paused,
+          duration: video.duration
+        };
+      })()
+    `);
+    return info;
+  } catch (error) {
+    console.error('Failed to get video info:', error);
+    return null;
+  }
+};
+
+// Create PiP window
+const createPipWindow = (videoId, seekTime = 0) => {
+  if (pipWindow) {
+    pipWindow.close();
+    pipWindow = null;
+  }
+
+  const pipWin = new BrowserWindow({
+    width: 480,
+    height: 270,
+    minWidth: 320,
+    minHeight: 180,
+    alwaysOnTop: true,
+    frame: false,
+    skipTaskbar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      preload: path.join(__dirname, 'pip-preload.js')
+    },
+  });
+
+  pipWin.loadFile(path.join(__dirname, 'pip.html'), {
+    query: { videoId, seekTime }
+  }).catch((error) => {
+    console.error('Failed to load PiP window:', error);
+    pipWin.destroy();
+    pipWindow = null;
+  });
+
+  pipWin.on('closed', () => {
+    pipWindow = null;
+    // Sync final state back to main window
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('pip-closed');
+    }
+  });
+
+  pipWindow = pipWin;
+  return pipWin;
+};
+
+// Toggle PiP - open or close
+const togglePip = async (win) => {
+  if (pipWindow) {
+    pipWindow.close();
+    pipWindow = null;
+    return;
+  }
+
+  const info = await getVideoInfo(win);
+  if (!info || !info.videoId) {
+    console.warn('Could not get video info for PiP');
+    return;
+  }
+
+  createPipWindow(info.videoId, Math.floor(info.currentTime));
+  
+  // If video was paused, pause the PiP window too
+  if (info.paused && pipWindow) {
+    pipWindow.webContents.once('did-finish-load', () => {
+      pipWindow.webContents.send('pip-command', { type: 'pause' });
+    });
+  }
+};
+
+// IPC handlers (guarded for test environments without ipcMain)
+if (ipcMain) {
+  ipcMain.on('pip-action', (_event, action) => {
+    if (!pipWindow || pipWindow.isDestroyed()) return;
+
+    switch (action.type) {
+      case 'load-video':
+        pipWindow.webContents.send('pip-command', {
+          type: 'load-video',
+          videoId: action.videoId,
+          seekTime: action.seekTime || 0
+        });
+        break;
+      case 'play':
+        pipWindow.webContents.send('pip-command', { type: 'play' });
+        break;
+      case 'pause':
+        pipWindow.webContents.send('pip-command', { type: 'pause' });
+        break;
+      case 'seek-to':
+        pipWindow.webContents.send('pip-command', { type: 'seek-to', time: action.time });
+        break;
+    }
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -215,6 +362,8 @@ function createWindow() {
     }
   });
 
+  mainWindow = win;
+
   if (isDev) registerDevToolsShortcut(win);
 
   gatePermissions(win.webContents.session);
@@ -222,28 +371,18 @@ function createWindow() {
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isYouTubeUrl(url)) return { action: 'allow' };
-    // A Google sign-in has to happen in this app. Handed to the system browser
-    // it signs the browser in and leaves the app exactly as signed out as it
-    // was, and the user is left with a "Sign in" button that does nothing.
     if (isGoogleAuthUrl(url)) return { action: 'allow' };
-    // Everything else belongs in the user's own browser - but only if it is a
-    // web address. A javascript: URL is not something the shell can open.
     if (url.startsWith('https://') || url.startsWith('http://')) shell.openExternal(url);
     return { action: 'deny' };
   });
 
   win.webContents.on('will-navigate', (event, url) => {
     if (isYouTubeUrl(url)) return;
-    // Google's identity pages are part of the sign-in handshake, so the
-    // "Sign in" link has to be able to follow them.
     if (isGoogleAuthUrl(url)) return;
     console.warn(`Blocked navigation away from YouTube: ${url}`);
     event.preventDefault();
   });
 
-  // A Google sign-in popup is a real child window, because that is the window
-  // YouTube expects the answer to come back through. It is kept apart from the
-  // glass one: no theme, its own title, and no window of its own.
   win.webContents.on('did-create-window', (_event, authWindow, details) => {
     if (!isGoogleAuthUrl(details?.url ?? '')) return;
 
@@ -257,25 +396,28 @@ function createWindow() {
       navEvent.preventDefault();
     });
     authWindow.webContents.on('did-navigate', (_navEvent, url) => {
-      // Google sends the browser back to YouTube once the account is linked.
       if (!isYouTubeUrl(url)) return;
       signedIn = true;
       authWindow.close();
     });
     authWindow.on('closed', () => {
-      // The account cookie now lives in the shared session, so the YouTube
-      // page has to be reloaded for the signed-in state to show up.
       if (!signedIn || win.isDestroyed()) return;
       win.webContents.reload();
     });
   });
 
-  // The glass theme is YouTube's own styling. Google's sign-in pages are not
-  // YouTube, and a dark glass skin over a Google form makes the form hard to
-  // read, so the theme is only ever applied to a YouTube document.
   win.webContents.on('did-finish-load', () => {
     if (!isYouTubeUrl(win.webContents.getURL())) return;
     applyTheme(win.webContents);
+  });
+
+  // Handle window close - close PiP window too
+  win.on('closed', () => {
+    if (pipWindow) {
+      pipWindow.close();
+      pipWindow = null;
+    }
+    mainWindow = null;
   });
 
   win.loadURL('https://youtube.com').catch((error) => {
@@ -316,7 +458,15 @@ if (!app.requestSingleInstanceLock()) {
     win.focus();
   });
 
-  app.whenReady().then(createWindow).catch((error) => {
+  app.whenReady().then(() => {
+    createWindow();
+    // Register global shortcut for PiP (Ctrl+Shift+P)
+    if (globalShortcut) {
+      globalShortcut.register('Control+Shift+P', () => {
+        if (mainWindow) togglePip(mainWindow);
+      });
+    }
+  }).catch((error) => {
     console.error(`Startup failed: ${error.message}`);
     dialog.showErrorBox('YouTube Desktop', `The app failed to start.\n\n${error.message}`);
   });

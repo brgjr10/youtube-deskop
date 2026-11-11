@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Picture in Picture</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+    #player {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="player" src="" allow="autoplay; picture-in-picture" allowfullscreen></iframe>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('videoId') || '';
+    const seekTime = parseInt(urlParams.get('seekTime') || '0', 10);
+
+    let playerReady = false;
+    const iframe = document.getElementById('player');
+
+    iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1&start=${seekTime}&controls=1&rel=0&modestbranding=1&disablekb=1`;
+
+    iframe.addEventListener('load', () => { playerReady = true; });
+
+    window.addEventListener('message', function(event) {
+      if (event.origin !== 'https://www.youtube.com') return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.event === 'onReady') {
+          playerReady = true;
+        }
+      } catch (e) {}
+    });
+
+    // Main process API for controlling the PiP player
+    window.pipAPI = {
+      loadVideo: function(videoId, seekTime) {
+        iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1&start=${seekTime}&controls=1&rel=0&modestbranding=1&disablekb=1`;
+        playerReady = false;
+        if (window.pipAPI.onReady) window.pipAPI.onReady();
+      },
+      play: function() {
+        if (playerReady && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+        }
+      },
+      pause: function() {
+        if (playerReady && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: '' }), '*');
+        }
+      },
+      seekTo: function(time) {
+        if (playerReady && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [time] }), '*');
+        }
+      },
+      onReady: null,
+      onStateChange: null
+    };
+
+    // Notify main that PiP is ready
+    setTimeout(() => {
+      if (window.pipAPI.onReady) window.pipAPI.onReady();
+    }, 100);
+  </script>
+</body>
+</html>
