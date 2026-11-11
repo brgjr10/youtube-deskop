@@ -319,25 +319,35 @@ const createPipWindow = (videoId, seekTime = 0) => {
 
 // Toggle PiP - open or close
 const togglePip = async (win) => {
-  if (pipWindow) {
-    pipWindow.close();
-    pipWindow = null;
-    return;
-  }
+  try {
+    if (!win || win.isDestroyed()) {
+      console.warn('togglePip called with invalid window');
+      return;
+    }
 
-  const info = await getVideoInfo(win);
-  if (!info || !info.videoId) {
-    dialog.showErrorBox('YouTube Desktop', 'Could not find a video to picture-in-picture.\n\nMake sure a video is playing or paused.');
-    return;
-  }
+    if (pipWindow) {
+      pipWindow.close();
+      pipWindow = null;
+      return;
+    }
 
-  const pipWin = createPipWindow(info.videoId, Math.floor(info.currentTime));
+    const info = await getVideoInfo(win);
+    if (!info || !info.videoId) {
+      dialog.showErrorBox('YouTube Desktop', 'Could not find a video to picture-in-picture.\n\nMake sure a video is playing or paused.');
+      return;
+    }
 
-  // If video was paused, pause the PiP window too
-  if (info.paused && pipWin) {
-    pipWin.webContents.once('did-finish-load', () => {
-      pipWin.webContents.send('pip-command', { type: 'pause' });
-    });
+    const pipWin = createPipWindow(info.videoId, Math.floor(info.currentTime));
+
+    // If video was paused, pause the PiP window too
+    if (info.paused && pipWin) {
+      pipWin.webContents.once('did-finish-load', () => {
+        pipWin.webContents.send('pip-command', { type: 'pause' });
+      });
+    }
+  } catch (error) {
+    console.error(`togglePip error: ${error.message}`);
+    dialog.showErrorBox('YouTube Desktop', `Picture-in-picture failed: ${error.message}`);
   }
 };
 
@@ -481,11 +491,22 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     // Register global shortcut for PiP (Ctrl+Shift+P)
     if (globalShortcut) {
-      const registered = globalShortcut.register('Control+Shift+P', () => {
-        if (mainWindow) togglePip(mainWindow);
-      });
-      if (!registered) {
-        console.warn('Failed to register Ctrl+Shift+P global shortcut (may conflict with other apps)');
+      try {
+        const registered = globalShortcut.register('Control+Shift+P', () => {
+          try {
+            if (mainWindow) togglePip(mainWindow);
+            else console.warn('PiP shortcut fired but mainWindow is null');
+          } catch (error) {
+            console.error(`PiP shortcut error: ${error.message}`);
+          }
+        });
+        if (!registered) {
+          console.warn('Failed to register Ctrl+Shift+P global shortcut (may conflict with another app)');
+        } else {
+          console.log('PiP shortcut Ctrl+Shift+P registered');
+        }
+      } catch (error) {
+        console.error(`Failed to register PiP shortcut: ${error.message}`);
       }
     }
   }).catch((error) => {
